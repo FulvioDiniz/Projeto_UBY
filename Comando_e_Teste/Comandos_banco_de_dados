@@ -1,0 +1,133 @@
+-- Tabela Receita
+CREATE TABLE receita (
+    id INTEGER PRIMARY KEY,
+    observacao TEXT
+);
+
+-- Tabela Produto
+CREATE TABLE produto (
+    id INTEGER PRIMARY KEY,
+    receita_id INTEGER NOT NULL,
+    numero_produto INTEGER NOT NULL,
+    qtd_produto INTEGER NOT NULL,
+    observacao TEXT,
+    FOREIGN KEY (receita_id) REFERENCES receita(id)
+);
+
+-- Tabela Lote
+CREATE TABLE lote (
+    id INTEGER PRIMARY KEY,
+    produto_id INTEGER NOT NULL,
+    numero_lote INTEGER NOT NULL,
+    identificacao_lote VARCHAR(255),
+    qtd_produto_cada_lote INTEGER NOT NULL,
+    FOREIGN KEY (produto_id) REFERENCES produto(id)
+);
+
+-- Inserindo a receita
+INSERT INTO receita (id, observacao)
+VALUES (1, 'Receita de Teste');
+
+-- Inserindo 10 produtos para a receita (id = 1)
+INSERT INTO produto (id, receita_id, numero_produto, qtd_produto, observacao) VALUES 
+(1, 1, 1, 40, 'Produto 1 de teste'),
+(2, 1, 2, 40, 'Produto 2 de teste'),
+(3, 1, 3, 40, 'Produto 3 de teste'),
+(4, 1, 4, 40, 'Produto 4 de teste'),
+(5, 1, 5, 40, 'Produto 5 de teste'),
+(6, 1, 6, 40, 'Produto 6 de teste'),
+(7, 1, 7, 40, 'Produto 7 de teste'),
+(8, 1, 8, 40, 'Produto 8 de teste'),
+(9, 1, 9, 40, 'Produto 9 de teste'),
+(10, 1, 10, 40, 'Produto 10 de teste');
+
+-- Inserindo 4 lotes para cada produto
+-- Para o Produto 1 (id = 1):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(1, 1, 1, 'Lote 1 do Produto 1', 10),
+(2, 1, 2, 'Lote 2 do Produto 1', 10),
+(3, 1, 3, 'Lote 3 do Produto 1', 10),
+(4, 1, 4, 'Lote 4 do Produto 1', 10);
+
+-- Para o Produto 2 (id = 2):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(5, 2, 1, 'Lote 1 do Produto 2', 10),
+(6, 2, 2, 'Lote 2 do Produto 2', 10),
+(7, 2, 3, 'Lote 3 do Produto 2', 10),
+(8, 2, 4, 'Lote 4 do Produto 2', 10);
+
+-- Para o Produto 3 (id = 3):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(9, 3, 1, 'Lote 1 do Produto 3', 10),
+(10, 3, 2, 'Lote 2 do Produto 3', 10),
+(11, 3, 3, 'Lote 3 do Produto 3', 10),
+(12, 3, 4, 'Lote 4 do Produto 3', 10);
+
+-- Para o Produto 4 (id = 4):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(13, 4, 1, 'Lote 1 do Produto 4', 10),
+(14, 4, 2, 'Lote 2 do Produto 4', 10),
+(15, 4, 3, 'Lote 3 do Produto 4', 10),
+(16, 4, 4, 'Lote 4 do Produto 4', 10);
+
+-- Para o Produto 5 (id = 5):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(17, 5, 1, 'Lote 1 do Produto 5', 10),
+(18, 5, 2, 'Lote 2 do Produto 5', 10),
+(19, 5, 3, 'Lote 3 do Produto 5', 10),
+(20, 5, 4, 'Lote 4 do Produto 5', 10);
+
+-- Para o Produto 6 (id = 6):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(21, 6, 1, 'Lote 1 do Produto 6', 10),
+(22, 6, 2, 'Lote 2 do Produto 6', 10),
+(23, 6, 3, 'Lote 3 do Produto 6', 10),
+(24, 6, 4, 'Lote 4 do Produto 6', 10);
+
+-- Para o Produto 7 (id = 7):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(25, 7, 1, 'Lote 1 do Produto 7', 10),
+(26, 7, 2, 'Lote 2 do Produto 7', 10),
+(27, 7, 3, 'Lote 3 do Produto 7', 10),
+(28, 7, 4, 'Lote 4 do Produto 7', 10);
+
+-- Para o Produto 8 (id = 8):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(29, 8, 1, 'Lote 1 do Produto 8', 10),
+(30, 8, 2, 'Lote 2 do Produto 8', 10),
+(31, 8, 3, 'Lote 3 do Produto 8', 10),
+(32, 8, 4, 'Lote 4 do Produto 8', 10);
+
+-- Para o Produto 9 (id = 9):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(33, 9, 1, 'Lote 1 do Produto 9', 10),
+(34, 9, 2, 'Lote 2 do Produto 9', 10),
+(35, 9, 3, 'Lote 3 do Produto 9', 10),
+(36, 9, 4, 'Lote 4 do Produto 9', 10);
+
+-- Para o Produto 10 (id = 10):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(37, 10, 1, 'Lote 1 do Produto 10', 10),
+(38, 10, 2, 'Lote 2 do Produto 10', 10),
+(39, 10, 3, 'Lote 3 do Produto 10', 10),
+(40, 10, 4, 'Lote 4 do Produto 10', 10);
+
+
+
+
+SELECT 
+    r.id AS receita_id,
+    r.observacao AS receita_observacao,
+    p.id AS produto_id,
+    p.numero_produto,
+    p.qtd_produto,
+    p.observacao AS produto_observacao,
+    l.id AS lote_id,
+    l.numero_lote,
+    l.identificacao_lote,
+    l.qtd_produto_cada_lote
+FROM receita r
+JOIN produto p ON r.id = p.receita_id
+JOIN lote l ON p.id = l.produto_id
+WHERE r.id = 1
+ORDER BY p.numero_produto, l.numero_lote;
