@@ -1,6 +1,6 @@
 from pycomm3 import LogixDriver
 
-def get_name_product_from_clp(plc_ip):
+'''def get_name_product_from_clp(plc_ip):
     """Lê a variável Name_Product do CLP para identificar a receita."""
     with LogixDriver(plc_ip) as plc:
         result = plc.read('Param_Reator_01.Product_Name')
@@ -53,7 +53,7 @@ def send_recipe_to_clp(recipe_name_seq, plc_ip):
         for index, product in enumerate(recipe_name_seq):
             tag_name = f'Product_Name_Seq_R5[{index}]'
             plc.write((tag_name, product))
-        print(f"Receita enviada para o CLP: {recipe_name_seq}")
+        print(f"Receita enviada para o CLP: {recipe_name_seq}")'''
 
 def set_lotes_peso_from_clp(plc_ip,posicao, peso1, peso2, peso3, peso4):
     with LogixDriver(plc_ip) as plc:
@@ -66,3 +66,5 @@ def set_lotes_peso_from_clp(plc_ip,posicao, peso1, peso2, peso3, peso4):
         plc.write((tag_lote_peso3, peso3))
         plc.write((tag_lote_peso4, peso4))
         print(f"Lotes e pesos enviados para o CLP: {posicao}, {peso1}, {peso2}, {peso3}, {peso4}")
+
+
