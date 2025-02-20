@@ -117,9 +117,9 @@ def get_receita_from_db(cursor, receita_id):
         except ValueError as ve:
             print(f"Erro ao criar produto {num_produto}: {ve}")
             # Caso a soma dos lotes não seja igual à qtd_produto, o ValueError é lançado.
-    
+    nome_receita = rows[0].receita_observacao
     # Cria a Receita com a lista de produtos
-    receita_obj = Receita(produtos=produtos_list)
+    receita_obj = Receita(produtos=produtos_list,nome_receita=nome_receita)
     return receita_obj
 
 
@@ -135,3 +135,6 @@ def get_receita_from_db(cursor, receita_id):
     
 except Exception as e:
     print("Erro na conexão ou consulta:", e)'''
+
+
+

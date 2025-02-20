@@ -45,15 +45,15 @@ class Produto:
 
 
 class Receita:
-    def __init__(self, produtos):
+    def __init__(self, produtos,nome_receita):
         """
         :param produtos: lista de objetos Produto que compõem a receita.
         """
         self.produtos = produtos
+        self.nome_receita = nome_receita
 
     def __str__(self):
         produtos_str = "\n\n".join(str(produto) for produto in self.produtos)
-        return f"Receita:\n{produtos_str}"
-
-    def __repr__(self):
-        return self.__str__()
+        return (f"Receita {self.nome_receita}:\n"
+                f"Produtos:\n\n{produtos_str}")
+    

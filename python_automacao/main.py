@@ -1,6 +1,6 @@
 from app.recipes import get_recipe_from_db
 from app.recipes_feitas import save_recipe_step_to_db, confirm_recipe_step_in_db
-from app.clp import set_lotes_peso_from_clp
+from app.clp import *
 from config.settings import PLC_IP
 from app.database import *
 import time
@@ -59,18 +59,32 @@ def main():
     
     if receita_obj is not None:
         print("Receita obtida do banco:")
-        print(receita_obj)
-        print(receita_obj.produtos[0].lotes[0].qtd_produto_cada_lote)
+        set_Recipe_Name_to_clp(PLC_IP,  "CANA_VEGETATIVO") # Alterar nome da receita pegando direto do banco
+        i = 0
+        print(len(receita_obj.produtos))
+        get_produtos_name_to_clp(PLC_IP)
+        #print(receita_obj)
+        #print(receita_obj.produtos[0].lotes[0].qtd_produto_cada_lote)
         #set_lotes_peso_from_clp(PLC_IP, receita_obj.produtos, 100, 200, 300, 400)
+        print(receita_obj.nome_receita)
+        
         for produto in receita_obj.produtos:
+            #print(produto.observacao)
+            #print(i)
+            #set_Product_Name_Seq_to_clp(PLC_IP, produto.observacao,i)            
+            #i = i + 1
+
             for lote in produto.lotes:
-                print(f"Produto {produto.numero_produto} - Lote {lote.numero_lote}: {lote.qtd_produto_cada_lote}")
+                #print(f"Produto {produto.numero_produto} - Lote {lote.numero_lote}: {lote.qtd_produto_cada_lote}")
                 peso1 = produto.lotes[0].qtd_produto_cada_lote
                 peso2 = produto.lotes[1].qtd_produto_cada_lote
                 peso3 = produto.lotes[2].qtd_produto_cada_lote
                 peso4 = produto.lotes[3].qtd_produto_cada_lote
-                print(peso1, peso2, peso3, peso4)
-                set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, peso1, peso2, peso3, peso4)
+                #print(peso1, peso2, peso3, peso4)
+
+                
+
+                #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, peso1, peso2, peso3, peso4)
 
 
             
