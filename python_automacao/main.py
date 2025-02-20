@@ -59,7 +59,7 @@ def main():
     
     if receita_obj is not None:
         print("Receita obtida do banco:")
-        set_Recipe_Name_to_clp(PLC_IP,  "CANA_VEGETATIVO") # Alterar nome da receita pegando direto do banco
+        set_Recipe_Name_to_clp(PLC_IP,  "BYOFOL") # Alterar nome da receita pegando direto do banco
         i = 0
         print(len(receita_obj.produtos))
         get_produtos_name_to_clp(PLC_IP)

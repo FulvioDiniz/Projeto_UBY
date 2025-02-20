@@ -89,13 +89,13 @@ def set_produtos_to_clp(plc_ip, produtos):
 
 def set_Product_Name_Seq_to_clp(plc_ip, string,index):
     with LogixDriver(plc_ip) as plc:
-        tag_name = f'Product_Name_Seq_R5[{index}]'
+        tag_name = f'Product_Name_Seq_R1[{index}]'
         plc.write((tag_name, string))
         print(f"Produtos enviados para o CLP: {string}")
 
 def set_Recipe_Name_to_clp(plc_ip, string):
     with LogixDriver(plc_ip) as plc:
-        tag_name = f'Param_Reator_05.Product_Name'
+        tag_name = f'Param_Reator_01.Product_Name'
         plc.write((tag_name, string))
         print(f"Nome da receita enviada para o CLP: {string}")
 
@@ -104,7 +104,7 @@ def get_produtos_name_to_clp(plc_ip):
     with LogixDriver(plc_ip) as plc:
         produtos = []
         for index in range(0, 10):
-            tag_name = f'Product_Name_Seq_R5[{index}]'
+            tag_name = f'Product_Name_Seq_R1[{index}]'
             result = plc.read(tag_name)
             if result:
                 produtos.append(result.value)
