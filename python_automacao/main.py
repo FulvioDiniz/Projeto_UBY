@@ -21,6 +21,7 @@ def processar_receita_enviando_lote(receita_id):
         for j, produto in enumerate(receita_obj.produtos):
             num_lotes = len(produto.lotes)
             print(f"\nProduto: {produto.numero_produto} | Quantidade de lotes: {num_lotes}")
+            set_quantidade_produto_to_clp(PLC_IP, j, produto.qtd_produto)
             
             # Ajusta a configuração de lotes de acordo com a quantidade
             match num_lotes:
