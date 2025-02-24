@@ -1,6 +1,6 @@
 import pyodbc
 from app.recipes_feitas import save_recipe_step_to_db, confirm_recipe_step_in_db
-from app.clp import set_lotes_peso_from_clp
+from app.clp import *
 from config.settings import PLC_IP
 from app.database import get_receita_from_db, DB_CONFIG
 
@@ -68,10 +68,14 @@ def processar_receita_enviando_lote(receita_id):
     cnxn.close()
 
 
+
+
 def main():
     # Exemplo de uso da função
-    receita_id_exemplo = '020020111'
-    processar_receita_enviando_lote(receita_id_exemplo)
+    #print(get_finalizador_receita(PLC_IP))
+    if validador_de_comunicacao_to_clp(PLC_IP):
+        receita_id = '020020111'
+        processar_receita_enviando_lote(receita_id)
 
 
 if __name__ == "__main__":

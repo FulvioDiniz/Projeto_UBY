@@ -138,3 +138,8 @@ except Exception as e:
 
 
 
+def verifica_receita_nova_no_db(cursor, receita_id):
+    query = "SELECT COUNT(*) FROM receita WHERE id = ?;"
+    cursor.execute(query, (receita_id,))
+    row = cursor.fetchone()
+    return row[0] > 0

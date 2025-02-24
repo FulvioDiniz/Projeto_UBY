@@ -55,6 +55,56 @@ def send_recipe_to_clp(recipe_name_seq, plc_ip):
             plc.write((tag_name, product))
         print(f"Receita enviada para o CLP: {recipe_name_seq}")'''
 
+
+
+
+
+
+
+
+
+'''REATOR 01 FUNÇÕES'''
+
+
+def validador_de_comunicacao_to_clp(plc_ip):
+    try:
+        with LogixDriver(plc_ip) as plc:
+            return True
+    except Exception as e:
+        print(f"Erro ao conectar ao CLP: {e}")
+        return False
+
+def set_Product_Name_Seq_to_clp(plc_ip, string,index):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = f'Product_Name_Seq_R1[{index}]'
+        plc.write((tag_name, string))
+        print(f"Produtos enviados para o CLP: {string}")
+
+def set_Recipe_Name_to_clp(plc_ip, string):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = f'Param_Reator_01.Product_Name'
+        plc.write((tag_name, string))
+        print(f"Nome da receita enviada para o CLP: {string}")
+
+
+def get_produtos_name_to_clp(plc_ip):
+    with LogixDriver(plc_ip) as plc:
+        produtos = []
+        for index in range(0, 10):
+            tag_name = f'Product_Name_Seq_R1[{index}]'
+            result = plc.read(tag_name)
+            if result:
+                produtos.append(result.value)
+        print(f"Produtos obtidos do CLP: {produtos}")
+        return produtos
+    
+def set_produtos_lote_to_clp(plc_ip, contador,posicao_peso, valor):
+    with LogixDriver(plc_ip) as plc:
+        print(f"contador: {contador}")
+        tag_name = f'REATOR_01_ERP.IN_INFOR_LOTE[{contador}].PESO_{posicao_peso}'
+        plc.write((tag_name, valor))
+        print(f"Produtos enviados para o CLP: {valor}")
+
 def set_lotes_peso_from_clp(plc_ip,posicao, peso1, peso2, peso3, peso4):
     with LogixDriver(plc_ip) as plc:
         #tag_lote_peso1 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_1'
@@ -91,41 +141,27 @@ def get_lotes_peso_from_clp(plc_ip):
         print(f"Lotes obtidos do CLP: {lotes}")
         return lotes
 
-
-
-
-
-
-
-'''REATOR 01 FUNÇÕES'''
-
-def set_Product_Name_Seq_to_clp(plc_ip, string,index):
-    with LogixDriver(plc_ip) as plc:
-        tag_name = f'Product_Name_Seq_R1[{index}]'
-        plc.write((tag_name, string))
-        print(f"Produtos enviados para o CLP: {string}")
-
-def set_Recipe_Name_to_clp(plc_ip, string):
-    with LogixDriver(plc_ip) as plc:
-        tag_name = f'Param_Reator_01.Product_Name'
-        plc.write((tag_name, string))
-        print(f"Nome da receita enviada para o CLP: {string}")
-
-
-def get_produtos_name_to_clp(plc_ip):
-    with LogixDriver(plc_ip) as plc:
-        produtos = []
-        for index in range(0, 10):
-            tag_name = f'Product_Name_Seq_R1[{index}]'
-            result = plc.read(tag_name)
-            if result:
-                produtos.append(result.value)
-        print(f"Produtos obtidos do CLP: {produtos}")
-        return produtos
     
-def set_produtos_lote_to_clp(plc_ip, contador,posicao_peso, valor):
+def get_validador_incia_receita(plc_ip):
     with LogixDriver(plc_ip) as plc:
-        print(f"contador: {contador}")
-        tag_name = f'REATOR_01_ERP.IN_INFOR_LOTE[{contador}].PESO_{posicao_peso}'
-        plc.write((tag_name, valor))
-        print(f"Produtos enviados para o CLP: {valor}")
+        result = plc.read('Param_Reator_01.Sts_sent_OK')
+        if result:
+            return result.value
+        return None
+    
+def get_name_product_from_clp(plc_ip):
+    """Lê a variável Name_Product do CLP para identificar a receita."""
+    with LogixDriver(plc_ip) as plc:
+        result = plc.read('Param_Reator_01.Product_Name')
+        if result:
+            return result.value
+        return None
+    
+def get_finalizador_receita(plc_ip):
+    with LogixDriver(plc_ip) as plc:
+        Contador = plc.read('Program:Reator_01.Cont_R1')
+        if Contador:
+            return Contador.value
+        return None
+    
+
