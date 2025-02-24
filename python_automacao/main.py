@@ -54,44 +54,63 @@ def main():
     cnxn = pyodbc.connect(DB_CONFIG)
     cursor = cnxn.cursor()
     # Define o ID da receita que deseja puxar
-    receita_id = 1
+    receita_id = '020020111'
     receita_obj = get_receita_from_db(cursor, receita_id)
     
     if receita_obj is not None:
         print("Receita obtida do banco:")
-        set_Recipe_Name_to_clp(PLC_IP,  "BYOFOL") # Alterar nome da receita pegando direto do banco
+        #set_Recipe_Name_to_clp(PLC_IP,  "BYOFOL") # Alterar nome da receita pegando direto do banco
         i = 0
+        j = 0
         print(len(receita_obj.produtos))
-        get_produtos_name_to_clp(PLC_IP)
+        #get_produtos_name_to_clp(PLC_IP)
         #print(receita_obj)
         #print(receita_obj.produtos[0].lotes[0].qtd_produto_cada_lote)
-        #set_lotes_peso_from_clp(PLC_IP, receita_obj.produtos, 100, 200, 300, 400)
-        print(receita_obj.nome_receita)
-        
+        #set_lotes_peso_from_clp(PLC_IP, receita_obj.produtos, 100, 200, 300, 400)       
         for produto in receita_obj.produtos:
+            #get_lotes_peso_from_clp(PLC_IP)
             #print(produto.observacao)
             #print(i)
             #set_Product_Name_Seq_to_clp(PLC_IP, produto.observacao,i)            
             #i = i + 1
-
-            for lote in produto.lotes:
+            #valor_referencia = produto.numero_produto
+            #print(f"Produto {produto.numero_produto} - Lote{i} : {lote.qtd_produto_cada_lote}")
+            print("valor j ",j)
+       
                 #print(f"Produto {produto.numero_produto} - Lote {lote.numero_lote}: {lote.qtd_produto_cada_lote}")
-                peso1 = produto.lotes[0].qtd_produto_cada_lote
-                peso2 = produto.lotes[1].qtd_produto_cada_lote
-                peso3 = produto.lotes[2].qtd_produto_cada_lote
-                peso4 = produto.lotes[3].qtd_produto_cada_lote
-                #print(peso1, peso2, peso3, peso4)
+            print(f"Produto {produto.numero_produto} ")
+            print(len(receita_obj.produtos[j].lotes))
+            match len(receita_obj.produtos[j].lotes):
+                case 1:
+                        set_lotes_peso_from_clp(PLC_IP, j, receita_obj.produtos[j].lotes[0].qtd_produto_cada_lote, 0, 0, 0)
+                        #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, receita_obj.produtos[j].lotes[i].qtd_produto_cada_lote, 0, 0, 0)
+                case 2:
+                        set_lotes_peso_from_clp(PLC_IP, j, receita_obj.produtos[j].lotes[0].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[1].qtd_produto_cada_lote, 0, 0)
+                        #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, receita_obj.produtos[j].lotes[i].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+1].qtd_produto_cada_lote, 0, 0)
+                case 3:
+                        set_lotes_peso_from_clp(PLC_IP, j, receita_obj.produtos[j].lotes[0].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[1].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[2].qtd_produto_cada_lote, 0)
+                        #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, receita_obj.produtos[j].lotes[i].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+1].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+2].qtd_produto_cada_lote, 0)
+                case 4:
+                        set_lotes_peso_from_clp(PLC_IP, j, receita_obj.produtos[j].lotes[0].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[1].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[2].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[3].qtd_produto_cada_lote)
 
+                        #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, receita_obj.produtos[j].lotes[i].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+1].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+2].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+3].qtd_produto_cada_lote)
+                case _:
+                        print("Nenhum lote encontrado")
+              
                 
+               # if (len(receita_obj.produtos[j].lotes) < i):
+                    #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, receita_obj.produtos[j].lotes[i].qtd_produto_cada_lote, 0, 0, 0)
 
-                #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, peso1, peso2, peso3, peso4)
 
+                #set_lotes_peso_from_clp(PLC_IP, produto.numero_produto, receita_obj.produtos[j].lotes[i].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+1].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+2].qtd_produto_cada_lote, receita_obj.produtos[j].lotes[i+3].qtd_produto_cada_lote)
+            j = j + 1
 
             
     
     # Fecha a conexão
     cursor.close()
     cnxn.close()
+
 
 if __name__ == "__main__":
     main()

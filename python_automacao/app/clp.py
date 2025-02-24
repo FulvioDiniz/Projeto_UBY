@@ -57,6 +57,10 @@ def send_recipe_to_clp(recipe_name_seq, plc_ip):
 
 def set_lotes_peso_from_clp(plc_ip,posicao, peso1, peso2, peso3, peso4):
     with LogixDriver(plc_ip) as plc:
+        #tag_lote_peso1 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_1'
+        #tag_lote_peso2 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_2'
+        #tag_lote_peso3 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_3'
+        #tag_lote_peso4 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_4'
         tag_lote_peso1 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].PESO_1'
         tag_lote_peso2 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].PESO_2'
         tag_lote_peso3 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].PESO_3'
@@ -76,6 +80,16 @@ def set_produtos_to_clp(plc_ip, produtos):
 
 
 
+def get_lotes_peso_from_clp(plc_ip):
+    with LogixDriver(plc_ip) as plc:
+        lotes = []
+        for index in range(0, 10):
+            tag_name = f'REATOR_01_ERP.IN_INFOR_LOTE[{index}].PESO_1'
+            result = plc.read(tag_name)
+            if result:
+                lotes.append(result.value)
+        print(f"Lotes obtidos do CLP: {lotes}")
+        return lotes
 
 
 
@@ -83,9 +97,7 @@ def set_produtos_to_clp(plc_ip, produtos):
 
 
 
-
-
-'''REATOR 05 FUNÇÕES'''
+'''REATOR 01 FUNÇÕES'''
 
 def set_Product_Name_Seq_to_clp(plc_ip, string,index):
     with LogixDriver(plc_ip) as plc:
@@ -110,3 +122,10 @@ def get_produtos_name_to_clp(plc_ip):
                 produtos.append(result.value)
         print(f"Produtos obtidos do CLP: {produtos}")
         return produtos
+    
+def set_produtos_lote_to_clp(plc_ip, contador,posicao_peso, valor):
+    with LogixDriver(plc_ip) as plc:
+        print(f"contador: {contador}")
+        tag_name = f'REATOR_01_ERP.IN_INFOR_LOTE[{contador}].PESO_{posicao_peso}'
+        plc.write((tag_name, valor))
+        print(f"Produtos enviados para o CLP: {valor}")

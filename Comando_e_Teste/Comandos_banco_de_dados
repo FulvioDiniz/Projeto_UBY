@@ -131,3 +131,145 @@ JOIN produto p ON r.id = p.receita_id
 JOIN lote l ON p.id = l.produto_id
 WHERE r.id = 1
 ORDER BY p.numero_produto, l.numero_lote;
+
+
+
+
+
+-- Inserção da receita POTENTSMART
+
+-- Inserindo a receita
+INSERT INTO receita (id, observacao)
+VALUES (020020111, 'POTENTSMART');
+
+-- Inserindo 10 produtos para a receita (id = 1)
+INSERT INTO produto (id, receita_id, numero_produto, qtd_produto, observacao) VALUES 
+(030060006, 020020111, 1, 2975, 'AGUA'),
+(030060036, 020020111, 3, 500, 'POLIGLICOL'),
+(030060035,020020111 , 2,500, 'SURFACTANTE NAO IONICO'),
+(030060037, 020020111, 4, 250, 'DLIMONENO'),
+(030060018, 020020111, 2, 150, 'GLICERINA'),
+(030060033, 020020111, 1, 100, 'POLIMERO ACRILICO'),
+(030060017, 020020111, 2, 500, 'ANTIESPUMANTE AFE-1430 OU SE4230 ADTIVO'),
+(030060021, 020020111, 1, 25, 'CONSERVANTE');
+
+-- Inserindo 4 lotes para cada produto
+-- Para o Produto 1 (id = 030060006):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(10, 030060006, 10, 'Lote 1 do AGUA', 2975);
+
+-- Para o Produto 2 (id = 030060036):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(50, 030060036, 100, 'Lote 1 do POLIGLICOL', 200),
+(60, 030060036, 200, 'Lote 2 do POLIGLICOL', 100),
+(70, 030060036, 300, 'Lote 3 do POLIGLICOL', 200);
+
+
+-- Para o Produto 3 (id = 030060035):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(90, 030060035, 101, 'Lote 1 do SURFACTANTE NAO IONICO', 200),
+(100, 030060035, 201, 'Lote 2 do SURFACTANTE NAO IONICO', 300);
+
+-- Para o Produto 4 (id = 030060037):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(130, 030060037, 110, 'Lote 1 do DLIMONENO', 100),
+(140, 030060037, 210, 'Lote 2 do DLIMONENO', 50),
+(150, 030060037, 310, 'Lote 3 do DLIMONENO', 50),
+(160, 030060037, 410, 'Lote 4 do DLIMONENO', 50);
+
+-- Para o Produto 5 (id = 5):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(170, 030060018, 111, 'Lote 1 do GLICERINA', 50),
+(180, 030060018, 211, 'Lote 2 do GLICERINA', 100);
+
+-- Para o Produto 6 (id = 6):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(210, 030060033, 112, 'Lote 1 do POLIMERO ACRILICO', 100);
+
+-- Para o Produto 7 (id = 7):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(250, 030060017, 121, 'Lote 1 do ANTIESPUMANTE AFE-1430 OU SE4230 ADTIVO7', 250),
+(260, 030060017, 221, 'Lote 2 do ANTIESPUMANTE AFE-1430 OU SE4230 ADTIVO', 250);
+
+
+-- Para o Produto 8 (id = 8):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(290, 030060021, 122, 'Lote 1 do CONSERVANTE', 10);
+
+
+
+
+
+
+-- Inserção da receita POTENTSMART
+
+-- Inserindo a receita
+INSERT INTO receita (id, observacao)
+VALUES (020020111, 'POTENTSMART');
+
+-- Inserindo 10 produtos para a receita (id = 1)
+INSERT INTO produto (id, receita_id, numero_produto, qtd_produto, observacao) VALUES 
+(030060006, 020020111, 1, 2975, 'AGUA'),
+(030060036, 020020111, 2, 500, 'POLIGLICOL'),
+(030060035,020020111 , 3,500, 'SURFACTANTE NAO IONICO'),
+(030060037, 020020111, 4, 250, 'DLIMONENO'),
+(030060018, 020020111, 5, 150, 'GLICERINA'),
+(030060033, 020020111, 6, 100, 'POLIMERO ACRILICO'),
+(030060017, 020020111, 7, 500, 'ANTIESPUMANTE AFE-1430 OU SE4230 ADTIVO'),
+(030060021, 020020111, 8, 25, 'CONSERVANTE');
+
+-- Inserindo 4 lotes para cada produto
+-- Para o Produto 1 (id = 030060006):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(10, 030060006, 10, 'Lote 1 do AGUA', 2975);
+
+-- Para o Produto 2 (id = 030060036):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(50, 030060036, 100, 'Lote 1 do POLIGLICOL', 200),
+(60, 030060036, 200, 'Lote 2 do POLIGLICOL', 100),
+(70, 030060036, 300, 'Lote 3 do POLIGLICOL', 200);
+
+
+-- Para o Produto 3 (id = 030060035):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(90, 030060035, 101, 'Lote 1 do SURFACTANTE NAO IONICO', 200),
+(100, 030060035, 201, 'Lote 2 do SURFACTANTE NAO IONICO', 300);
+
+-- Para o Produto 4 (id = 030060037):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(130, 030060037, 110, 'Lote 1 do DLIMONENO', 100),
+(140, 030060037, 210, 'Lote 2 do DLIMONENO', 50),
+(150, 030060037, 310, 'Lote 3 do DLIMONENO', 50),
+(160, 030060037, 410, 'Lote 4 do DLIMONENO', 50);
+
+-- Para o Produto 5 (id = 5):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(170, 030060018, 111, 'Lote 1 do GLICERINA', 50),
+(180, 030060018, 211, 'Lote 2 do GLICERINA', 100);
+
+-- Para o Produto 6 (id = 6):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(210, 030060033, 112, 'Lote 1 do POLIMERO ACRILICO', 100);
+
+-- Para o Produto 7 (id = 7):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(250, 030060017, 121, 'Lote 1 do ANTIESPUMANTE AFE-1430 OU SE4230 ADTIVO7', 250),
+(260, 030060017, 221, 'Lote 2 do ANTIESPUMANTE AFE-1430 OU SE4230 ADTIVO', 250);
+
+
+-- Para o Produto 8 (id = 8):
+INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_cada_lote) VALUES 
+(290, 030060021, 122, 'Lote 1 do CONSERVANTE', 25);
+
+
+
+
+
+-- 1) Deleta todos os registros de lote
+DELETE FROM lote;
+
+-- 2) Deleta todos os registros de produto
+DELETE FROM produto;
+
+-- 3) Deleta todos os registros de receita
+DELETE FROM receita;
