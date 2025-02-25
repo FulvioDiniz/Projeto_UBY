@@ -143,20 +143,21 @@ def set_value_bar_loading_to_plc(plc_ip, valor):
         plc.write((tag_name, valor))
         print(f"Valor de barra de carregamento enviado para o CLP: {valor}")
 
-def open_pop_up_loading_to_plc(plc_ip):
+def open_pop_up_loading_to_plc(plc_ip,value):
     with LogixDriver(plc_ip) as plc:
         tag_name = 'BIT_LOADING'
-        plc.write((tag_name, 1))
+        plc.write((tag_name, value))
         print(f"Pop-up de carregamento aberto no CLP.")
+
 
 def validador_set_bit_enviado_to_plc(plc_ip,value):
     with LogixDriver(plc_ip) as plc:
-        tag_name = plc.write('BIT_ENVIADO')
-        plc.write((tag_name, value))
-        print(f"Bit de envio de lote ativado no CLP.")
+        # Escreve diretamente no tag "BIT_ENVIADO" o valor 1
+        plc.write("BIT_ENVIADO", value)
+        print("Bit de envio de lote ativado no CLP.")
 
-def validador_falha_set_bit_enviado_to_plc(plc_ip,value):
+
+def validador_falha_set_bit_enviado_to_plc(plc_ip, value):
     with LogixDriver(plc_ip) as plc:
-        tag_name = plc.write('BIT_NOT_ENVIADO')
-        plc.write((tag_name, value))
+        plc.write('BIT_NOT_ENVIADO', value)
         print(f"Bit de envio de lote ativado no CLP.")

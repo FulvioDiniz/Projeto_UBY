@@ -32,7 +32,7 @@ def processar_receita_enviando_lote(receita_id):
             val_total_load_100 = val_total_load*100
             set_value_bar_loading_to_plc(PLC_IP, int(val_total_load_100))
             print(f"Load: { int(val_total_load_100)}")
-            time.sleep(2)            
+                        
             
             # Ajusta a configuração de lotes de acordo com a quantidade
             match num_lotes:
@@ -114,13 +114,17 @@ def main():
             if validador_send_lote(PLC_IP):
                 receita_id = get_Receitaid_from_clp(PLC_IP)
                 print(f"Receita ID: {receita_id}")
-                open_pop_up_loading_to_plc(PLC_IP)
+                open_pop_up_loading_to_plc(PLC_IP,1)
                 processar_receita_enviando_lote(receita_id)
                 set_visble_send_lote_to_clp(PLC_IP)
                 print("Lote enviado com sucesso!")
                 validador_set_bit_enviado_to_plc(PLC_IP,1)
                 time.sleep(5)
                 validador_set_bit_enviado_to_plc(PLC_IP,0)
+                open_pop_up_loading_to_plc(PLC_IP,0)
+                set_value_bar_loading_to_plc(PLC_IP, 0)
+                
+
                 
             else:
                 print("Erro ao enviar lote para o CLP.")

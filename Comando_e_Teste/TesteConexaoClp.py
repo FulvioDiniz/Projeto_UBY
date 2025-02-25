@@ -4,11 +4,11 @@ PLC_IP = '192.168.0.10'
 
 
 
-def set_value_bar_loading_to_plc(plc_ip, valor):
+def validador_set_bit_enviado_to_plc(plc_ip,value):
     with LogixDriver(plc_ip) as plc:
-        tag_name = 'CARREGANDO'
-        plc.write((tag_name, valor))
-        print(f"Valor de barra de carregamento enviado para o CLP: {valor}")
+        tag_name = plc.write('BIT_ENVIADO')
+        plc.write((tag_name, 1))
+        print(f"Bit de envio de lote ativado no CLP.")
 
 def test_connection_to_clp(plc_ip):
     """
@@ -26,7 +26,7 @@ def test_connection_to_clp(plc_ip):
 def main():
     if test_connection_to_clp(PLC_IP):
         print("Conexão com o CLP estabelecida com sucesso!")
-        set_value_bar_loading_to_plc(PLC_IP, 50)
+        validador_set_bit_enviado_to_plc(PLC_IP)
     else:
         print("Falha na comunicação com o CLP.")
 
