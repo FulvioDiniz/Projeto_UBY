@@ -124,10 +124,9 @@ def validador_send_lote(plc_ip):
             return result.value
         return None
     
-def set_visble_send_lote_to_clp(plc_ip):
+def set_visble_send_lote_to_clp(plc_ip,value):
     with LogixDriver(plc_ip) as plc:
-        tag_name = 'Sts_Batch_OK'
-        plc.write((tag_name, 1))
+        plc.write("Sts_Batch_OK", value)
         print(f"Visibilidade de envio de lote enviada para o CLP: 1")
 
 def set_value_product_predicted_to_plc(plc_ip, valor):

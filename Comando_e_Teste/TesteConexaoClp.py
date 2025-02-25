@@ -26,7 +26,7 @@ def test_connection_to_clp(plc_ip):
 def main():
     if test_connection_to_clp(PLC_IP):
         print("Conexão com o CLP estabelecida com sucesso!")
-        validador_set_bit_enviado_to_plc(PLC_IP)
+        #validador_set_bit_enviado_to_plc(PLC_IP)
     else:
         print("Falha na comunicação com o CLP.")
 
