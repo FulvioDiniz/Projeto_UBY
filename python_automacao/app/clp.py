@@ -33,29 +33,33 @@ def get_produtos_name_to_clp(plc_ip):
                 produtos.append(result.value)
         print(f"Produtos obtidos do CLP: {produtos}")
         return produtos
-    
-def set_produtos_lote_to_clp(plc_ip, contador,posicao_peso, valor):
-    with LogixDriver(plc_ip) as plc:
-        print(f"contador: {contador}")
-        tag_name = f'REATOR_01_ERP.IN_INFOR_LOTE[{contador}].PESO_{posicao_peso}'
-        plc.write((tag_name, valor))
-        print(f"Produtos enviados para o CLP: {valor}")
 
-def set_lotes_peso_from_clp(plc_ip,posicao, peso1, peso2, peso3, peso4):
+
+def set_lotes_peso_from_clp(plc_ip,posicao, peso1, peso2, peso3, peso4,reator):
     with LogixDriver(plc_ip) as plc:
-        #tag_lote_peso1 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_1'
-        #tag_lote_peso2 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_2'
-        #tag_lote_peso3 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_3'
-        #tag_lote_peso4 = f'REATOR_01_ERP.IN_INFOR_LOTE[{posicao}].PESO_4'
-        tag_lote_peso1 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].PESO_1'
-        tag_lote_peso2 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].PESO_2'
-        tag_lote_peso3 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].PESO_3'
-        tag_lote_peso4 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].PESO_4'
+        tag_lote_peso1 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].PESO_1'
+        tag_lote_peso2 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].PESO_2'
+        tag_lote_peso3 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].PESO_3'
+        tag_lote_peso4 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].PESO_4'
         plc.write((tag_lote_peso1, peso1))
         plc.write((tag_lote_peso2, peso2))
         plc.write((tag_lote_peso3, peso3))
         plc.write((tag_lote_peso4, peso4))
         print(f"Lotes e pesos enviados para o CLP: {posicao}, {peso1}, {peso2}, {peso3}, {peso4}")
+
+
+
+def set_lotes_TEXTO_from_clp(plc_ip,posicao, TEXTO1, TEXTO2, TEXTO3, TEXTO4):
+    with LogixDriver(plc_ip) as plc:
+        tag_lote_peso1 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_1'
+        tag_lote_peso2 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_2'
+        tag_lote_peso3 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_3'
+        tag_lote_peso4 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_4'
+        plc.write((tag_lote_peso1, TEXTO1))
+        plc.write((tag_lote_peso2, TEXTO2))
+        plc.write((tag_lote_peso3, TEXTO3))
+        plc.write((tag_lote_peso4, TEXTO4))
+        print(f"Lotes e pesos enviados para o CLP: {posicao}, {TEXTO1}, {TEXTO2}, {TEXTO3}, {TEXTO4}")
 
 def set_produtos_to_clp(plc_ip, produtos):
     with LogixDriver(plc_ip) as plc:
@@ -66,11 +70,11 @@ def set_produtos_to_clp(plc_ip, produtos):
 
 
 
-def get_lotes_peso_from_clp(plc_ip):
+def get_lotes_peso_from_clp(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
         lotes = []
         for index in range(0, 10):
-            tag_name = f'REATOR_01_ERP.IN_INFOR_LOTE[{index}].PESO_1'
+            tag_name = f'REATOR_{reator}_ERP.IN_INFOR_LOTE[{index}].PESO_1'
             result = plc.read(tag_name)
             if result:
                 lotes.append(result.value)
@@ -108,7 +112,51 @@ def set_quantidade_produto_to_clp(plc_ip,pos, quantidade):
 
 def get_Receitaid_from_clp(plc_ip):
     with LogixDriver(plc_ip) as plc:
-        result = plc.read('Param_Reator_01.Receita_ID')
+        result = plc.read('Param_Reator_01.Product_batch')
         if result:
             return result.value
         return None
+    
+def validador_send_lote(plc_ip):
+    with LogixDriver(plc_ip) as plc:
+        result = plc.read('Cmd_Search_Batch')
+        if result:
+            return result.value
+        return None
+    
+def set_visble_send_lote_to_clp(plc_ip):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = 'Sts_Batch_OK'
+        plc.write((tag_name, 1))
+        print(f"Visibilidade de envio de lote enviada para o CLP: 1")
+
+def set_value_product_predicted_to_plc(plc_ip, valor):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = 'Param_Reator_01.Product_predicted'
+        plc.write((tag_name, valor))
+        print(f"Valor de produto previsto enviado para o CLP: {valor}")
+
+
+def set_value_bar_loading_to_plc(plc_ip, valor):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = 'CARREGANDO'
+        plc.write((tag_name, valor))
+        print(f"Valor de barra de carregamento enviado para o CLP: {valor}")
+
+def open_pop_up_loading_to_plc(plc_ip):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = 'BIT_LOADING'
+        plc.write((tag_name, 1))
+        print(f"Pop-up de carregamento aberto no CLP.")
+
+def validador_set_bit_enviado_to_plc(plc_ip,value):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = plc.write('BIT_ENVIADO')
+        plc.write((tag_name, value))
+        print(f"Bit de envio de lote ativado no CLP.")
+
+def validador_falha_set_bit_enviado_to_plc(plc_ip,value):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = plc.write('BIT_NOT_ENVIADO')
+        plc.write((tag_name, value))
+        print(f"Bit de envio de lote ativado no CLP.")

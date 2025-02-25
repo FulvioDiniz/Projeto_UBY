@@ -137,6 +137,19 @@ except Exception as e:
     print("Erro na conexão ou consulta:", e)'''
 
 
+def Qnt_total_lotes_receitas(cursor, receita_id):
+    query = """
+    SELECT 
+        COUNT(l.id) AS total_lotes
+    FROM receita r
+    JOIN produto p ON r.id = p.receita_id
+    JOIN lote l ON p.id = l.produto_id
+    WHERE r.id = ?;
+    """
+    cursor.execute(query, (receita_id,))
+    row = cursor.fetchone()
+    return row.total_lotes
+
 
 def verifica_receita_nova_no_db(cursor, receita_id):
     query = "SELECT COUNT(*) FROM receita WHERE id = ?;"

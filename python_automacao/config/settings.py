@@ -13,5 +13,8 @@ DB_CONFIG = (
     f'PWD={password}'
 )
 
+def set_plc_ip(ip):
+    global PLC_IP
+    PLC_IP = ip
 
 PLC_IP = '192.168.0.10'

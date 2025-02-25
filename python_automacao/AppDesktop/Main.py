@@ -4,6 +4,8 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 
+
+
 def resource_path(relative_path):
     """
     Retorna o caminho absoluto do recurso, seja em modo de desenvolvimento
@@ -27,7 +29,7 @@ class CLPApp(tk.Tk):
 
         # Estado inicial
         self.conectado = False
-        self.clp_ip = "192.168.0.100"
+        self.clp_ip = "192.168.0.10"
 
         # Configura estilos e cria o layout
         self._configurar_estilos()
@@ -120,6 +122,7 @@ class CLPApp(tk.Tk):
         novo_ip = self.ip_entry.get().strip()
         if novo_ip:
             self.clp_ip = novo_ip
+            set_plc_ip(self.clp_ip)
             print("IP atualizado para:", self.clp_ip)
 
     def _toggle_conexao(self):
