@@ -3,12 +3,27 @@ from pycomm3 import LogixDriver
 PLC_IP = '192.168.0.10'
 
 
-
-def validador_set_bit_enviado_to_plc(plc_ip,value):
+def get_vetor_de_envio_ERP(plc_ip, reator, qtd_lotes):
     with LogixDriver(plc_ip) as plc:
-        tag_name = plc.write('BIT_ENVIADO')
-        plc.write((tag_name, 1))
-        print(f"Bit de envio de lote ativado no CLP.")
+        vetor = []
+        if reator < 10:
+            reator = str('0' + str(reator))
+            print(reator)
+        for index in range(0, qtd_lotes):
+            tag_name = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_1'
+            tag_name2 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_2'
+            tag_name3 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_3'
+            tag_name4 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_4'
+            result = plc.read(tag_name)
+            result2 = plc.read(tag_name2)
+            result3 = plc.read(tag_name3)
+            result4 = plc.read(tag_name4)
+            if result:
+                vetor.append(result.value)
+                vetor.append(result2.value)
+                vetor.append(result3.value)
+                vetor.append(result4.value)
+        print(f"Vetor de envio ERP obtido do CLP: {vetor}")
 
 def test_connection_to_clp(plc_ip):
     """
@@ -26,7 +41,7 @@ def test_connection_to_clp(plc_ip):
 def main():
     if test_connection_to_clp(PLC_IP):
         print("Conexão com o CLP estabelecida com sucesso!")
-        #validador_set_bit_enviado_to_plc(PLC_IP)
+        get_vetor_de_envio_ERP(PLC_IP, 1, 3)
     else:
         print("Falha na comunicação com o CLP.")
 

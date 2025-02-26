@@ -4,7 +4,6 @@ from app.clp import *
 from config.settings import PLC_IP
 from app.database import get_receita_from_db, DB_CONFIG,Qnt_total_lotes_receitas
 import time
-from Reatores.Reator1 import Reator1
 
 
 def Validador_Encontra_receita(receita_id):
@@ -127,7 +126,7 @@ def processar_receita_enviando_lote(receita_id):
  
 
 
-def main():
+def Reator1():
     # Exemplo de uso da função
     #print(get_finalizador_receita(PLC_IP))
     bit_receita_em_processo = 0
@@ -168,12 +167,7 @@ def main():
                     get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote)
                     cursor.close()
                     cnxn.close()
-                    break
-
-
-                        
-
-
+                    break                        
     else:
         print("Erro ao enviar lote para o CLP.")
                 #validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
@@ -181,7 +175,3 @@ def main():
                 #validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
 
 
-
-if __name__ == "__main__":
-    Reator1()
-    #main()

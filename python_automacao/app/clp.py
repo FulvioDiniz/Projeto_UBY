@@ -160,3 +160,47 @@ def validador_falha_set_bit_enviado_to_plc(plc_ip, value):
     with LogixDriver(plc_ip) as plc:
         plc.write('BIT_NOT_ENVIADO', value)
         print(f"Bit de envio de lote ativado no CLP.")
+
+'''def get_vetor_de_envio_ERP(plc_ip):
+    with LogixDriver(plc_ip) as plc:
+        vetor = []
+        for index in range(0, 10):
+            tag_name = f'ERP_REATOR1.OUT_INFOR_LOTE[{index}]'
+            result = plc.read(tag_name)
+            if result:
+                vetor.append(result.value)
+        print(f"Vetor de envio ERP obtido do CLP: {vetor}")
+        return vetor'''
+
+
+# tag = REATOR_01.ERP.OUT_INFOR_LOTE[{index}].PESO_1
+
+def get_vetor_de_envio_ERP(plc_ip, reator, qtd_lotes):
+    with LogixDriver(plc_ip) as plc:
+        vetor = []
+        if reator < 10:
+            reator = str('0' + str(reator))
+        for index in range(0, qtd_lotes):
+            tag_name = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_1'
+            tag_name2 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_2'
+            tag_name3 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_3'
+            tag_name4 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_4'
+            result = plc.read(tag_name)
+            result2 = plc.read(tag_name2)
+            result3 = plc.read(tag_name3)
+            result4 = plc.read(tag_name4)
+            if result:
+                vetor.append(result.value)
+                vetor.append(result2.value)
+                vetor.append(result3.value)
+                vetor.append(result4.value)
+        print(f"Vetor de envio ERP obtido do CLP: {vetor}")
+
+
+
+def get_finaliza_receita(plc_ip,reator):
+    with LogixDriver(plc_ip) as plc:
+        result = plc.read(f'Finalizar_ReceitaR{reator}')
+        if result:
+            return result.value
+        return None
