@@ -1,187 +1,59 @@
+import os
+import time
+import psutil
 import pyodbc
+import threading
+import tkinter as tk
+
 from app.recipes_feitas import save_recipe_step_to_db, confirm_recipe_step_in_db
 from app.clp import *
 from config.settings import PLC_IP
-from app.database import get_receita_from_db, DB_CONFIG,Qnt_total_lotes_receitas
-import time
+from app.database import get_receita_from_db, DB_CONFIG, Qnt_total_lotes_receitas
 from Reatores.Reator1 import Reator1
 
+# Obtém o objeto do processo atual (para monitorar apenas este programa)
+processo_atual = psutil.Process(os.getpid())
 
-def Validador_Encontra_receita(receita_id):
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
-    receita = get_receita_from_db(cursor, receita_id)
-    if receita is not None:
-        cursor.close()
-        cnxn.close()
-        return True
-    else:
-        cursor.close()
-        cnxn.close()
-        return False
-
-def processar_receita_enviando_lote(receita_id):
-
-    # Conecta ao banco
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
+def update_stats(label, process):
+    """
+    Atualiza o texto do label com uso de CPU e memória do 'process'
+    (apenas do processo Python atual).
+    """
+    # CPU em %, intervalo=0.1 para dar tempo de coleta (você pode ajustar)
+    cpu_percent = process.cpu_percent(interval=0.1)
+    # Memória RSS (Resident Set Size) em MB
+    mem_info = process.memory_info().rss / (1024 ** 2)
     
-    # Busca a receita no banco
-    receita_obj = get_receita_from_db(cursor, receita_id)
-    somador = 0
-    load = 0
-    val_total_load = 0
-    divisor = Qnt_total_lotes_receitas(cursor, receita_id)
-    
-    if receita_obj is not None:
-        set_Recipe_Name_to_clp(PLC_IP, receita_obj.nome_receita)
-        
-        # Percorre os produtos da receita
-        for j, produto in enumerate(receita_obj.produtos):
-            num_lotes = len(produto.lotes)
-            print(f"\nProduto: {produto.numero_produto} | Quantidade de lotes: {num_lotes}")
-            set_quantidade_produto_to_clp(PLC_IP, j, produto.qtd_produto)
-            somador = produto.qtd_produto + somador
-            load = len(produto.lotes)/divisor
-            val_total_load = val_total_load + load
-            val_total_load_100 = val_total_load*100
-            set_value_bar_loading_to_plc(PLC_IP, int(val_total_load_100))
-            print(f"Load: { int(val_total_load_100)}")
-                        
-            
-            # Ajusta a configuração de lotes de acordo com a quantidade
-            match num_lotes:
-                case 1:
-                    set_lotes_peso_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        0, 0, 0,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].identificacao_lote,"", "", ""
-                    )
-                case 2:
-                    set_lotes_peso_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        produto.lotes[1].qtd_produto_cada_lote,
-                        0, 0,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].identificacao_lote, produto.lotes[1].identificacao_lote, "", ""
-                    )
-                case 3:
-                    set_lotes_peso_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        produto.lotes[1].qtd_produto_cada_lote,
-                        produto.lotes[2].qtd_produto_cada_lote,
-                        0,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].identificacao_lote, produto.lotes[1].identificacao_lote, produto.lotes[2].identificacao_lote, ""
-                    )
-                case 4:
-                    set_lotes_peso_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        produto.lotes[1].qtd_produto_cada_lote,
-                        produto.lotes[2].qtd_produto_cada_lote,
-                        produto.lotes[3].qtd_produto_cada_lote,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        PLC_IP,
-                        j,
-                        produto.lotes[0].identificacao_lote, produto.lotes[1].identificacao_lote, produto.lotes[2].identificacao_lote, produto.lotes[3].identificacao_lote
-                    )
-                    
-                case _:
-                    print("Nenhum lote encontrado para este produto.")
-        print(f"Somador: {somador}")
-        set_value_product_predicted_to_plc(PLC_IP, somador)
-        cursor.close()
-        cnxn.close()
-        return True
- 
-        # Salva o passo da receita no banco          
-    else:
-        print(f"Não foi encontrada nenhuma receita com ID {receita_id}.")
-        cursor.close()
-        cnxn.close()
-        return False
-        
-    
-    # Fecha a conexão com o banco
+    label.config(
+        text=f" Gasto do Programa Reatores CPU: {cpu_percent:.1f}% | Memória: {mem_info:.1f} MB"
+    )
+    # Agenda a próxima atualização em 1 segundo (1000 ms)
+    label.after(1000, update_stats, label, process)
 
+def start_gui():
+    """Inicia uma janela Tkinter para exibir o monitor de hardware do programa."""
+    window = tk.Tk()
+    window.title("Monitor de Hardware (Somente Meu Programa)")
 
- 
+    label = tk.Label(window, text="Iniciando monitoramento...", font=("Arial", 14))
+    label.pack(padx=20, pady=20)
 
+    # Faz a primeira chamada para atualizar o label
+    update_stats(label, processo_atual)
+
+    window.mainloop()
 
 def main():
-    # Exemplo de uso da função
-    #print(get_finalizador_receita(PLC_IP))
-    bit_receita_em_processo = 0
-    #bit_receita_finalizada = get_finaliza_receita(PLC_IP,1)
-    if validador_de_comunicacao_to_clp(PLC_IP):
-        print(validador_send_lote(PLC_IP))
-        validador = False
-        while True:            
-            print("Rodando...")
-            if validador_send_lote(PLC_IP):
-                receita_id = get_Receitaid_from_clp(PLC_IP)                              
-                validador =  Validador_Encontra_receita(receita_id)
-                if validador == False:
-                    print("Erro ao enviar lote para o CLP.")
-                    open_pop_up_loading_to_plc(PLC_IP,1)
-                    validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
-                    time.sleep(10)
-                    open_pop_up_loading_to_plc(PLC_IP,0)
-                    validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
-                    set_visble_send_lote_to_clp(PLC_IP,0)
-                else:
-                    print(f"Receita ID: {receita_id}")                    
-                    open_pop_up_loading_to_plc(PLC_IP,1)
-                    set_visble_send_lote_to_clp(PLC_IP,1)
-                    print("Lote enviado com sucesso!")
-                    processar_receita_enviando_lote(receita_id)
-                    validador_set_bit_enviado_to_plc(PLC_IP,1)
-                    time.sleep(10)
-                    validador_set_bit_enviado_to_plc(PLC_IP,0)
-                    open_pop_up_loading_to_plc(PLC_IP,0)
-                    set_value_bar_loading_to_plc(PLC_IP, 0)  
-                    while bit_receita_em_processo == 0:
-                        bit_receita_em_processo = get_finaliza_receita(PLC_IP,1)
-                        print("Receita em processo...")
-                    cnxn = pyodbc.connect(DB_CONFIG)
-                    cursor = cnxn.cursor()
-                    quantidade_de_lote = Qnt_total_lotes_receitas(cursor, receita_id)
-                    get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote)
-                    cursor.close()
-                    cnxn.close()
-                    break
+    """
+    Cria uma thread para a janela de monitoramento,
+    depois executa a função Reator1 normalmente.
+    """
+    # Inicia a GUI em uma thread separada, para não bloquear o resto do programa
+    monitor_thread = threading.Thread(target=start_gui, daemon=True)
+    monitor_thread.start()
 
-
-                        
-
-
-    else:
-        print("Erro ao enviar lote para o CLP.")
-                #validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
-                #time.sleep(5)
-                #validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
-
-
+    # Chama a lógica principal (no seu caso, Reator1)
+    Reator1()
 
 if __name__ == "__main__":
-    Reator1()
-    #main()
+    main()
