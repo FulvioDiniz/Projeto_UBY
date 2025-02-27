@@ -1,6 +1,6 @@
 from pycomm3 import LogixDriver
 
-PLC_IP = '192.168.0.10'
+PLC_IP = '192.168.0.11'
 
 
 def get_vetor_de_envio_ERP(plc_ip, reator, qtd_lotes):

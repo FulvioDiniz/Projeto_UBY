@@ -3,8 +3,21 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+import threading
+import psutil
 
+# Ajusta sys.path para incluir o diretório python_automacao
+current_dir = os.path.abspath(os.path.dirname(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
+print("Conteúdo do diretório python_automacao:", os.listdir(project_root))
+print("Conteúdo da raiz do projeto:", os.listdir(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))))
+
+# Importa funções de configuração do IP e a main dos reatores
+from config.settings import set_plc_ip, get_plc_ip
+from main import main as reatores_main
 
 def resource_path(relative_path):
     """
@@ -17,43 +30,53 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+# Código do monitor de desempenho
+processo_atual = psutil.Process(os.getpid())
+
+def update_stats(label, process):
+    """
+    Atualiza o label com o uso de CPU e memória do processo.
+    """
+    cpu_percent = process.cpu_percent(interval=0.1)
+    mem_info = process.memory_info().rss / (1024 ** 2)
+    label.config(text=f"CPU: {cpu_percent:.1f}% | Memória: {mem_info:.1f} MB")
+    label.after(1000, update_stats, label, process)
+
 class CLPApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        # Configurações da janela principal com fundo laranja
+        # Configurações da janela principal
         self.title("Conexão CLP")
         self.geometry("800x600")
         self.configure(bg="#FFA500")  # Fundo laranja
         self.resizable(False, False)
 
-        # Estado inicial
+        # Estado inicial e IP atual vindo do módulo de configuração
         self.conectado = False
-        self.clp_ip = "192.168.0.10"
+        self.clp_ip = get_plc_ip() or ''
 
-        # Configura estilos e cria o layout
         self._configurar_estilos()
         self._criar_card()
+
+        # Adiciona o monitor de desempenho na parte inferior da janela
+        self.monitor_label = tk.Label(self, text="", font=("Arial", 12), bg="#FFA500", fg="white")
+        self.monitor_label.pack(side=tk.BOTTOM, pady=5)
+        update_stats(self.monitor_label, processo_atual)
 
     def _configurar_estilos(self):
         self.style = ttk.Style()
         self.style.theme_use("clam")
-
-        # Configuração dos botões: fundo laranja e fonte em negrito
         self.style.configure("TButton",
                              font=("Segoe UI", 12, "bold"),
                              padding=10,
                              background="#FFA500",
                              foreground="white")
         self.style.map("TButton", background=[("active", "#e69500")])
-
-        # Estilo para o título, com fundo branco para harmonizar com o card
         self.style.configure("Title.TLabel",
                              font=("Segoe UI", 24, "bold"),
                              foreground="#FFA500",
                              background="white")
-
-        # Estilo para textos informativos
         self.style.configure("Info.TLabel",
                              font=("Segoe UI", 14),
                              background="white",
@@ -64,9 +87,9 @@ class CLPApp(tk.Tk):
         self.card = tk.Frame(self, bg="white")
         self.card.place(relx=0.5, rely=0.5, anchor="center")
 
-        # Tentativa de carregar a logo da empresa
+        # Tenta carregar a logo da empresa
         try:
-            logo_path = resource_path(os.path.join("Img", "Logo.jpg"))
+            logo_path = resource_path(os.path.join("img", "Logo.jpg"))
             self.logo_image = Image.open(logo_path)
             # Redimensiona a logo preservando a proporção (largura máxima de 200px)
             max_width = 200
@@ -82,7 +105,7 @@ class CLPApp(tk.Tk):
             self.logo_label = tk.Label(self.card, text="Logo da Empresa", font=("Segoe UI", 18, "bold"), bg="white")
             self.logo_label.pack(pady=(20, 10))
 
-        # Título
+        # Título do card
         self.title_label = ttk.Label(self.card, text="Conexão CLP", style="Title.TLabel")
         self.title_label.pack(pady=(0, 20))
 
@@ -122,13 +145,22 @@ class CLPApp(tk.Tk):
         novo_ip = self.ip_entry.get().strip()
         if novo_ip:
             self.clp_ip = novo_ip
+            # Atualiza o IP na configuração global
             set_plc_ip(self.clp_ip)
             print("IP atualizado para:", self.clp_ip)
+            self.status_label.config(text="IP atualizado", bg="#007bff")
+        else:
+            print("IP inválido")
+            self.status_label.config(text="IP inválido", bg="#dc3545")
 
     def _toggle_conexao(self):
         """Alterna o estado de conexão e atualiza a interface."""
         self.conectado = not self.conectado
         self._atualizar_interface()
+
+        if self.conectado:
+            # Ao conectar, inicia a aplicação principal (reatores) em uma nova thread
+            threading.Thread(target=reatores_main, daemon=True).start()
 
     def _atualizar_interface(self):
         """Atualiza o texto e as cores do status e do botão."""

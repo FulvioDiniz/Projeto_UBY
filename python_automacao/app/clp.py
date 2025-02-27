@@ -22,12 +22,6 @@ def set_Recipe_Name_to_clp(plc_ip, string):
         plc.write((tag_name, string))
         print(f"Nome da receita enviada para o CLP: {string}")
         
-def set_Recipe_Name_to_clp(plc_ip, string,reator):
-    with LogixDriver(plc_ip) as plc:
-        tag_name = f'Param_Reator_{reator}.Product_Name'
-        plc.write((tag_name, string))
-        print(f"Nome da receita enviada para o CLP: {string}")
-
 
 def get_produtos_name_to_clp(plc_ip):
     with LogixDriver(plc_ip) as plc:
