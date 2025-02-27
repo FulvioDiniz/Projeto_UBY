@@ -126,7 +126,7 @@ def processar_receita_enviando_lote(receita_id):
  
 
 
-def Reator1():
+def Reator2():
     # Exemplo de uso da função
     #print(get_finalizador_receita(PLC_IP))
     bit_receita_em_processo = 0
@@ -144,7 +144,7 @@ def Reator1():
             print(flag)
             if validador_coninuo_programa or flag == 1:                                
                     if validador == False and flag == 0:
-                        print("Erro ao enviar lote para o CLP.")
+                        print("Erro ao enviar lote para o CLP 2 .")
                         open_pop_up_loading_to_plc(PLC_IP,1)
                         validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
                         time.sleep(10)
@@ -186,7 +186,7 @@ def Reator1():
                         #break    
                                             
         else:
-            print("Erro ao enviar lote para o CLP 1.")
+            print("Erro ao enviar lote para o CLP 2.")
                     #validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
                     #time.sleep(5)
                     #validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
