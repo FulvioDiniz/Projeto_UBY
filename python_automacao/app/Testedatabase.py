@@ -80,7 +80,9 @@ try:
     num_produtos_teste = quantidade_produtos_receita(cursor, receita_id_teste)
     num_lotes_por_produto = 4
 
-    vetor_peso_lote_teste = [3000.0, 2004.0, 1500.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    
+    vetor_peso_lote_teste = [3000.0, 2004.0, 1500.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    print(vetor_peso_lote_teste.__len__())
     envio_pesos_lote_erp(cursor, receita_id_teste, vetor_peso_lote_teste)
 
     cursor.execute("SELECT * FROM lote_enviado WHERE receita_id = ?", (receita_id_teste,))

@@ -175,12 +175,12 @@ def validador_falha_set_bit_enviado_to_plc(plc_ip, value):
 
 # tag = REATOR_01.ERP.OUT_INFOR_LOTE[{index}].PESO_1
 
-def get_vetor_de_envio_ERP(plc_ip, reator, qtd_lotes):
+def get_vetor_de_envio_ERP(plc_ip, reator, qtd_produto):
     with LogixDriver(plc_ip) as plc:
         vetor = []
         '''if reator < 10:
             reator = str('0' + str(reator))'''
-        for index in range(0, qtd_lotes):
+        for index in range(0, qtd_produto):
             
             tag_name = f'ERP_REATOR{reator}.OUT_INFOR_LOTE[{index}].PESO_1'
             tag_name2 = f'ERP_REATOR{reator}.OUT_INFOR_LOTE[{index}].PESO_2'
