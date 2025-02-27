@@ -228,12 +228,22 @@ def envio_pesos_lote_erp(cursor, receita_id, vetor_peso_lote):
     """
 
     data = datetime.now()  # Enviar como objeto datetime, não string
-
+    print("Enviando pesos...")
     index_peso = 0
+    cont = 0
+    index_peso = 0
+
     for produto in lista_produtos:  
         for lote in range(num_lotes_por_produto):  
-            cursor.execute(query_envia_peso, (receita_id, produto[0], vetor_peso_lote[index_peso], data))
-            index_peso += 1  
+            cursor.execute(
+                query_envia_peso, 
+                (receita_id, produto[cont], vetor_peso_lote[index_peso], data)
+            )
+            index_peso += 1
+        
+        cont += 1  # Só após processar os 4 lotes desse produto
+
+            
 
     cursor.commit()
     cursor.close()

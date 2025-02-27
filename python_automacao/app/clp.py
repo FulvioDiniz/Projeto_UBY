@@ -178,13 +178,14 @@ def validador_falha_set_bit_enviado_to_plc(plc_ip, value):
 def get_vetor_de_envio_ERP(plc_ip, reator, qtd_lotes):
     with LogixDriver(plc_ip) as plc:
         vetor = []
-        if reator < 10:
-            reator = str('0' + str(reator))
+        '''if reator < 10:
+            reator = str('0' + str(reator))'''
         for index in range(0, qtd_lotes):
-            tag_name = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_1'
-            tag_name2 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_2'
-            tag_name3 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_3'
-            tag_name4 = f'REATOR_{reator}_ERP.OUT_INFOR_LOTE[{index}].PESO_4'
+            
+            tag_name = f'ERP_REATOR{reator}.OUT_INFOR_LOTE[{index}].PESO_1'
+            tag_name2 = f'ERP_REATOR{reator}.OUT_INFOR_LOTE[{index}].PESO_2'
+            tag_name3 = f'ERP_REATOR{reator}.OUT_INFOR_LOTE[{index}].PESO_3'
+            tag_name4 = f'ERP_REATOR{reator}.OUT_INFOR_LOTE[{index}].PESO_4'
             result = plc.read(tag_name)
             result2 = plc.read(tag_name2)
             result3 = plc.read(tag_name3)
@@ -200,7 +201,12 @@ def get_vetor_de_envio_ERP(plc_ip, reator, qtd_lotes):
 
 def get_finaliza_receita(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
-        result = plc.read(f'Finalizar_ReceitaR{reator}')
+        result = plc.read(f'ERP_REATOR{reator}.Bit_Volta')
         if result:
             return result.value
         return None
+    
+def set_finaliza_receita(plc_ip, reator):
+    with LogixDriver(plc_ip) as plc:
+        plc.write(f'ERP_REATOR{reator}.Bit_Volta', 1)
+        print("Bit de finalização de receita ativado no CLP.")

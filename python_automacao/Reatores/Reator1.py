@@ -187,19 +187,32 @@ def Reator1():
                                 try:
                                     cnxn = pyodbc.connect(DB_CONFIG)
                                     cursor = cnxn.cursor()
-                                    quantidade_de_lote = Qnt_total_lotes_receitas(cursor, receita_id)
-                                    #get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote)
-                                    envio_pesos_lote_erp(cursor, receita_id, get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote))
-                                    cursor.close()
-                                    cnxn.close()
-                                    validador_coninuo_programa = 0
-                                    bit_receita_em_processo = 0
-                                    flag = 0
-                                except:
-                                    print("Erro ao enviar vetor de envio para o ERP.")
                                     
-                                #break    
-                                                        
+                                    receita_id_teste = receita_id
+                                    num_produtos_teste = quantidade_produtos_receita(cursor, receita_id_teste)
+                                    num_lotes_por_produto = 4
+                                    quantidade_de_lote = Qnt_total_lotes_receitas(cursor, receita_id)
+                                    vetor_peso_lote_teste = get_vetor_de_envio_ERP(PLC_IP, 1, num_produtos_teste)
+
+                                    envio_pesos_lote_erp(cursor, receita_id_teste, vetor_peso_lote_teste)
+
+                                    cursor.execute("SELECT * FROM lote_enviado WHERE receita_id = ?", (receita_id_teste,))
+                                    rows = cursor.fetchall()
+
+                                    print("Dados inseridos em lote_enviado:")
+                                    for row in rows:
+                                        print(row)
+
+                                except Exception as e:
+                                    print("Erro ao conectar ou inserir no SQL Server:", e)
+
+                                finally:
+                                    if 'cursor' in locals():
+                                        cursor.close()
+                                    if 'cnxn' in locals():
+                                        cnxn.close()
+                                    print("Conexão fechada.")
+
             else:
                 print("Erro ao enviar lote para o CLP 1.")
                 print(get_plc_ip())
@@ -208,3 +221,22 @@ def Reator1():
                                 #validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
 
 
+
+'''try:
+                                    cnxn = pyodbc.connect(DB_CONFIG)
+                                    cursor = cnxn.cursor()
+                                    quantidade_de_lote = Qnt_total_lotes_receitas(cursor, receita_id)
+                                    #get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote)
+                                    envio_pesos_lote_erp(cursor, receita_id, get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote))
+                                    #cursor.close()
+                                    #cnxn.close()                                    
+                                    validador_coninuo_programa = 0
+                                    bit_receita_em_processo = 0
+                                    flag = 0
+                                    set_finaliza_receita(PLC_IP, 0)
+                                    print("Receita finalizada com sucesso.")
+                                except:
+                                    print("Erro ao enviar vetor de envio para o ERP.")
+                                    
+                                #break    '''
+                                                        
