@@ -12,8 +12,6 @@ project_root = os.path.abspath(os.path.join(current_dir, '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-print("Conteúdo do diretório python_automacao:", os.listdir(project_root))
-print("Conteúdo da raiz do projeto:", os.listdir(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))))
 
 from app.clp import validador_de_comunicacao_to_clp
 from config.settings import set_plc_ip, get_plc_ip
@@ -146,7 +144,7 @@ class CLPApp(tk.Tk):
         # Verifica a comunicação com o CLP
         if not validador_de_comunicacao_to_clp(novo_ip):
             print("Falha na comunicação com o CLP")
-            self.status_label.config(text="Falha na comunicação", bg="#dc3545")
+            self.status_label.config(text="Erro comunicação", bg="#dc3545")
             self.after(2000, lambda: self.update_ip_btn.config(state="normal"))
             return
 
@@ -161,7 +159,7 @@ class CLPApp(tk.Tk):
         # Antes de alternar a conexão, verifica se o IP atual é válido e a comunicação está OK
         if not self.clp_ip or not validador_de_comunicacao_to_clp(self.clp_ip):
             print("Não é possível conectar: IP inválido ou falha na comunicação")
-            self.status_label.config(text="Comunicação inválida", bg="#dc3545")
+            self.status_label.config(text="Erro", bg="#dc3545")
             return
 
         # Bloqueia o botão para evitar cliques repetidos

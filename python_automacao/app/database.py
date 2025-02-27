@@ -1,6 +1,7 @@
 import pyodbc
 from Variaveis_Teste.Receita import Receita, Produto, Lote
-
+import time
+from datetime import datetime
 server = 'FULVIO\\FULVIO'        # Ex: 'localhost\SQLEXPRESS'
 database = 'TESTE'           # Ex: 'meuBanco'
 username = 'sa'
@@ -156,3 +157,86 @@ def verifica_receita_nova_no_db(cursor, receita_id):
     cursor.execute(query, (receita_id,))
     row = cursor.fetchone()
     return row[0] > 0
+
+
+def envio_pesos_lote_erp(cursor, receita_id, vetor_peso_lote):
+    query = """
+            SELECT 
+                p.observacao AS produto_observacao
+                FROM produto p
+                JOIN receita r ON r.id = p.receita_id
+                WHERE r.id = ?
+                ORDER BY p.numero_produto;
+
+    """
+    cursor.execute(query, (receita_id))
+    cursor.commit()
+    lista_produtos = cursor.fetchall()
+    print(lista_produtos)
+    query_envia_peso = "INSERT INTO  lote_enviado(receita_id,produto,qtd_produto_cada_lote,data) VALUES (?,?,?,?);"
+    data = time.strftime('%D-%M-%Y %H:%M:%S')
+    for i in range(len(vetor_peso_lote)):
+        cursor.execute(query_envia_peso, (receita_id,lista_produtos[i], vetor_peso_lote[i],data))
+        cursor.commit()
+    cursor.close()
+    
+    
+    
+    
+def quantidade_produtos_receita(cursor, receita_id):
+    query = """
+    SELECT 
+        COUNT(p.id) AS total_produtos
+    FROM receita r
+    JOIN produto p ON r.id = p.receita_id
+    WHERE r.id = ?;
+    """
+    cursor.execute(query, (receita_id,))
+    row = cursor.fetchone()
+    return row.total_produtos
+    
+
+def envio_pesos_lote_erp(cursor, receita_id, vetor_peso_lote):
+    query = """
+        SELECT p.observacao AS produto_observacao
+        FROM produto p
+        JOIN receita r ON r.id = p.receita_id
+        WHERE r.id = ?
+        ORDER BY p.numero_produto;
+    """
+    
+    cursor.execute(query, (receita_id,))
+    lista_produtos = cursor.fetchall()
+    
+    if not lista_produtos:
+        print(f"Nenhum produto encontrado para a receita: {receita_id}")
+        return
+
+    print("Produtos encontrados:", lista_produtos)
+
+    num_produtos = len(lista_produtos)
+    num_lotes_por_produto = 4
+    total_pesos_esperados = num_produtos * num_lotes_por_produto
+
+    if len(vetor_peso_lote) != total_pesos_esperados:
+        print(f"Erro: Esperados {total_pesos_esperados} pesos, mas foram fornecidos {len(vetor_peso_lote)}.")
+        return
+    
+    query_envia_peso = """
+        INSERT INTO lote_enviado (receita_id, produto, qtd_produto_cada_lote, data) 
+        VALUES (?, ?, ?, ?);
+    """
+
+    data = datetime.now()  # Enviar como objeto datetime, não string
+
+    index_peso = 0
+    for produto in lista_produtos:  
+        for lote in range(num_lotes_por_produto):  
+            cursor.execute(query_envia_peso, (receita_id, produto[0], vetor_peso_lote[index_peso], data))
+            index_peso += 1  
+
+    cursor.commit()
+    cursor.close()
+    print("Pesos enviados com sucesso!")
+    
+

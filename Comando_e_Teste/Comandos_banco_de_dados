@@ -182,6 +182,48 @@ INSERT INTO lote (id, produto_id, numero_lote, identificacao_lote, qtd_produto_c
 
 
 
+
+
+-- Tabela Receita Recebida
+CREATE TABLE receita_recebida (
+    id INTEGER PRIMARY KEY,
+    -- Caso queira relacionar com a tabela de "receita" original:
+    receita_original_id INTEGER,       -- ou NOT NULL, se fizer sentido
+    observacao TEXT,
+    FOREIGN KEY (receita_original_id) REFERENCES receita(id)
+);
+
+-- Tabela Produto Recebido
+CREATE TABLE produto_recebido (
+    id INTEGER PRIMARY KEY,
+    receita_recebida_id INTEGER NOT NULL,
+    -- Caso queira relacionar com a tabela de "produto" original:
+    produto_original_id INTEGER,
+    numero_produto INTEGER NOT NULL,
+    qtd_produto INTEGER NOT NULL,
+    observacao TEXT,
+    FOREIGN KEY (receita_recebida_id) REFERENCES receita_recebida(id),
+    FOREIGN KEY (produto_original_id) REFERENCES produto(id)
+);
+
+-- Tabela Lote Recebido
+CREATE TABLE lote_recebido (
+    id INTEGER PRIMARY KEY,
+    produto_recebido_id INTEGER NOT NULL,
+    -- Caso queira relacionar com a tabela de "lote" original:
+    lote_original_id INTEGER,
+    numero_lote INTEGER NOT NULL,
+    identificacao_lote VARCHAR(255),
+    qtd_produto_cada_lote INTEGER NOT NULL,
+    peso DECIMAL(10,2), -- Coluna para receber o peso de cada lote
+    FOREIGN KEY (produto_recebido_id) REFERENCES produto_recebido(id),
+    FOREIGN KEY (lote_original_id) REFERENCES lote(id)
+);
+
+
+
+
+
 -- 1) Deleta todos os registros de lote
 DELETE FROM lote;
 

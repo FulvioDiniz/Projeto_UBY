@@ -3,7 +3,7 @@ from app.recipes_feitas import save_recipe_step_to_db, confirm_recipe_step_in_db
 from app.clp import *
 #from config.settings import PLC_IP
 from config.settings import get_plc_ip
-from app.database import get_receita_from_db, DB_CONFIG,Qnt_total_lotes_receitas
+from app.database import *
 import time
 
 
@@ -45,7 +45,7 @@ def processar_receita_enviando_lote(receita_id):
         # Percorre os produtos da receita
         for j, produto in enumerate(receita_obj.produtos):
             num_lotes = len(produto.lotes)
-            print(f"\nProduto: {produto.numero_produto} | Quantidade de lotes: {num_lotes}")
+            print(f"\nProduto: {produto.numero_produto} | Quantidade de lotes: {num_lotes}" )
             set_quantidade_produto_to_clp(get_plc_ip(), j, produto.qtd_produto)
             somador = produto.qtd_produto + somador
             load = len(produto.lotes)/divisor
@@ -188,10 +188,12 @@ def Reator1():
                                     cnxn = pyodbc.connect(DB_CONFIG)
                                     cursor = cnxn.cursor()
                                     quantidade_de_lote = Qnt_total_lotes_receitas(cursor, receita_id)
-                                    get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote)
+                                    #get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote)
+                                    envio_pesos_lote_erp(cursor, receita_id, get_vetor_de_envio_ERP(PLC_IP, 1, quantidade_de_lote))
                                     cursor.close()
                                     cnxn.close()
                                     validador_coninuo_programa = 0
+                                    bit_receita_em_processo = 0
                                     flag = 0
                                 except:
                                     print("Erro ao enviar vetor de envio para o ERP.")
