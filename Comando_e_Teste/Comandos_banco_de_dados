@@ -328,3 +328,26 @@ ADD erro_percentual AS (
     END
 ) PERSISTED;  -- Se quiser armazenar, senão omita PERSISTED
 GO
+
+
+
+CREATE TABLE lote_salvo (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    produto_id INT NOT NULL,
+    numero_lote FLOAT NOT NULL,
+    identificacao_lote VARCHAR(255),
+    qtd_produto_cada_lote FLOAT NOT NULL,
+    peso_real FLOAT,
+    data_insercao DATETIME NOT NULL 
+        CONSTRAINT DF_lote_salvo_data_insercao DEFAULT (GETDATE()),
+    
+    -- Coluna computada que mostra a % de erro entre peso_real e qtd_produto_cada_lote
+    erro_percentual AS (
+        CASE 
+            WHEN qtd_produto_cada_lote = 0 THEN 0
+            ELSE ((ABS(peso_real - qtd_produto_cada_lote) / qtd_produto_cada_lote) * 100.0)
+        END
+    ) PERSISTED,
+    
+    FOREIGN KEY (produto_id) REFERENCES produto(id)
+);

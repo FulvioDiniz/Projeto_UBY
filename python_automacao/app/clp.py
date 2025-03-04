@@ -10,24 +10,26 @@ def validador_de_comunicacao_to_clp(plc_ip):
         print(f"Erro ao conectar ao CLP: {e}")
         return False
 
-def set_Product_Name_Seq_to_clp(plc_ip, string,index):
+def set_Product_Name_Seq_to_clp(plc_ip, string,index,reator):
     with LogixDriver(plc_ip) as plc:
-        tag_name = f'Product_Name_Seq_R1[{index}]'
+        tag_name = f'Product_Name_Seq_R{reator}[{index}]'
         plc.write((tag_name, string))
         print(f"Produtos enviados para o CLP: {string}")
 
-def set_Recipe_Name_to_clp(plc_ip, string):
+def set_Recipe_Name_to_clp(plc_ip, string,reator):
     with LogixDriver(plc_ip) as plc:
-        tag_name = f'Param_Reator_01.Product_Name'
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_Name'
         plc.write((tag_name, string))
         print(f"Nome da receita enviada para o CLP: {string}")
         
 
-def get_produtos_name_to_clp(plc_ip):
+def get_produtos_name_to_clp(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
         produtos = []
         for index in range(0, 10):
-            tag_name = f'Product_Name_Seq_R1[{index}]'
+            tag_name = f'Product_Name_Seq_R{reator}[{index}]'
             result = plc.read(tag_name)
             if result:
                 produtos.append(result.value)
@@ -49,22 +51,22 @@ def set_lotes_peso_from_clp(plc_ip,posicao, peso1, peso2, peso3, peso4,reator):
 
 
 
-def set_lotes_TEXTO_from_clp(plc_ip,posicao, TEXTO1, TEXTO2, TEXTO3, TEXTO4):
+def set_lotes_TEXTO_from_clp(plc_ip,posicao, TEXTO1, TEXTO2, TEXTO3, TEXTO4,reator):
     with LogixDriver(plc_ip) as plc:
-        tag_lote_peso1 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_1'
-        tag_lote_peso2 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_2'
-        tag_lote_peso3 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_3'
-        tag_lote_peso4 = f'ERP_REATOR1.IN_INFOR_LOTE[{posicao}].TEXTO_4'
+        tag_lote_peso1 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].TEXTO_1'
+        tag_lote_peso2 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].TEXTO_2'
+        tag_lote_peso3 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].TEXTO_3'
+        tag_lote_peso4 = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{posicao}].TEXTO_4'
         plc.write((tag_lote_peso1, TEXTO1))
         plc.write((tag_lote_peso2, TEXTO2))
         plc.write((tag_lote_peso3, TEXTO3))
         plc.write((tag_lote_peso4, TEXTO4))
         print(f"Lotes e pesos enviados para o CLP: {posicao}, {TEXTO1}, {TEXTO2}, {TEXTO3}, {TEXTO4}")
 
-def set_produtos_to_clp(plc_ip, produtos):
+def set_produtos_to_clp(plc_ip, produtos,reator):
     with LogixDriver(plc_ip) as plc:
         for index, produto in enumerate(produtos):
-            tag_name = f'ERP_REATOR1.IN_INFOR_LOTE[{index}].PRODUTO'
+            tag_name = f'ERP_REATOR{reator}.IN_INFOR_LOTE[{index}].PRODUTO'
             plc.write((tag_name, produto))
         print(f"Produtos enviados para o CLP: {produtos}")
 
@@ -82,9 +84,12 @@ def get_lotes_peso_from_clp(plc_ip,reator):
         return lotes
 
     
-def get_validador_incia_receita(plc_ip):
+def get_validador_incia_receita(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
-        result = plc.read('Param_Reator_01.Sts_sent_OK')
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Sts_sent_OK'
+        result = plc.read(tag_name)
         if result:
             return result.value
         return None
@@ -92,46 +97,82 @@ def get_validador_incia_receita(plc_ip):
 def get_name_product_from_clp(plc_ip):
     """Lê a variável Name_Product do CLP para identificar a receita."""
     with LogixDriver(plc_ip) as plc:
-        result = plc.read('Param_Reator_01.Product_Name')
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_Name'
+        result = plc.read(tag_name)
         if result:
             return result.value
         return None
     
 def get_finalizador_receita(plc_ip):
     with LogixDriver(plc_ip) as plc:
-        Contador = plc.read('Program:Reator_01.Cont_R1')
-        if Contador:
-            return Contador.value
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Program:Reator_{reator}.Cont_R1'
+        result = plc.read(tag_name)
+        if result:
+            return result.value
         return None
     
-def set_quantidade_produto_to_clp(plc_ip,pos, quantidade):
+def set_quantidade_produto_to_clp(plc_ip,pos, quantidade,reator):
     with LogixDriver(plc_ip) as plc:
-        tag_name = f'Param_Reator_01.Qtd_Additives[{pos}]'
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Qtd_Additives[{pos}]'
         plc.write((tag_name, quantidade))
         print(f"Quantidade de produtos enviada para o CLP: {quantidade}")
 
-def get_Receitaid_from_clp(plc_ip):
+def get_Receitaid_from_clp(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
-        result = plc.read('Param_Reator_01.Product_batch')
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_batch'
+        result = plc.read(tag_name)
         if result:
             return result.value
         return None
     
-def validador_send_lote(plc_ip):
+def set_Receitaid_to_clp(plc_ip, reator,value):
     with LogixDriver(plc_ip) as plc:
-        result = plc.read('Cmd_Search_Batch')
+        tag_name = f'Param_Reator_{reator}.Product_batch'
+        plc.write(tag_name, value)
+        print("Receita enviada para o CLP.")
+    
+def set_validador_coninuo_programa_concluida(plc_ip,reator):
+    with LogixDriver(plc_ip) as plc:
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_batch'
+        plc.write((tag_name, 1))
+    
+def validador_send_lote(plc_ip,reator):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = f'Cmd_Search_Batch_R{reator}'
+        result = plc.read(tag_name)
         if result:
             return result.value
         return None
     
-def set_visble_send_lote_to_clp(plc_ip,value):
+def set_validador_send_lote_concluido(plc_ip,reator,value):
     with LogixDriver(plc_ip) as plc:
-        plc.write("Sts_Batch_OK", value)
+        tag_name = f'Cmd_Search_Batch_R{reator}'
+        plc.write(tag_name, value)
+        print(f"Validador de envio de lote enviado para o CLP: {value}")
+        
+
+    
+def set_visble_send_lote_to_clp(plc_ip,value,reator):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = f'Sts_Batch_OK_R{reator}'
+        plc.write(tag_name, value)
         print(f"Visibilidade de envio de lote enviada para o CLP: 1")
 
-def set_value_product_predicted_to_plc(plc_ip, valor):
+def set_value_product_predicted_to_plc(plc_ip, valor,reator):
     with LogixDriver(plc_ip) as plc:
-        tag_name = 'Param_Reator_01.Product_predicted'
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_predicted'
         plc.write((tag_name, valor))
         print(f"Valor de produto previsto enviado para o CLP: {valor}")
 
@@ -196,6 +237,7 @@ def get_vetor_de_envio_ERP(plc_ip, reator, qtd_produto):
                 vetor.append(result3.value)
                 vetor.append(result4.value)
         print(f"Vetor de envio ERP obtido do CLP: {vetor}")
+        return vetor
 
 
 
@@ -206,7 +248,7 @@ def get_finaliza_receita(plc_ip,reator):
             return result.value
         return None
     
-def set_finaliza_receita(plc_ip, reator):
+def set_finaliza_receita(plc_ip, reator,value):
     with LogixDriver(plc_ip) as plc:
-        plc.write(f'ERP_REATOR{reator}.Bit_Volta', 1)
+        plc.write(f'ERP_REATOR{reator}.Bit_Volta', value)
         print("Bit de finalização de receita ativado no CLP.")

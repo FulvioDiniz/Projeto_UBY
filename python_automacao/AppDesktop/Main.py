@@ -28,6 +28,13 @@ class CLPApp(tk.Tk):
         self.configure(bg="white")
         self.resizable(False, False)
         
+        # Define o ícone da janela utilizando um arquivo .ico
+        try:
+            icon_path = resource_path(os.path.join("img", "logo.ico"))
+            self.iconbitmap(icon_path)
+        except Exception as e:
+            print("Erro ao carregar ícone:", e)
+        
         self.conectado = False
         self.esta_rodando = False
         self.clp_ip = get_plc_ip() or ''
@@ -65,7 +72,7 @@ class CLPApp(tk.Tk):
         self.style.configure(
             "TButton",
             font=("Segoe UI", 12, "bold"),
-            padding=10,
+            padding=(10, 4),  # padding horizontal de 10 e vertical de 4
             background="#FFA500",
             foreground="white",
             anchor="center",    # Centraliza o conteúdo

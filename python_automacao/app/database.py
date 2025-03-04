@@ -228,6 +228,9 @@ def envio_pesos_lote_salvo(cursor, receita_id, vetor_peso_lote):
 
     # 2) Verifica se o 'vetor_peso_lote' combina com a quantidade de lotes
     total_lotes = len(rows)
+    print("total lote",total_lotes)
+    vetor_p = len(vetor_peso_lote)
+    print("total vetor peso", vetor_p)
     if len(vetor_peso_lote) != total_lotes:
         print(f"Erro: Esperados {total_lotes} pesos, mas foram fornecidos {len(vetor_peso_lote)}.")
         return
@@ -254,6 +257,7 @@ def envio_pesos_lote_salvo(cursor, receita_id, vetor_peso_lote):
         identificacao_lote  = row.identificacao_lote
         qtd_cada_lote       = row.qtd_produto_cada_lote
         peso_real           = vetor_peso_lote[i]  # valor real medido do lote
+        print(produto_id,numero_lote,identificacao_lote,qtd_cada_lote,peso_real,data_atual)
 
         cursor.execute(insert_query, (
             produto_id,
@@ -267,3 +271,16 @@ def envio_pesos_lote_salvo(cursor, receita_id, vetor_peso_lote):
     # 5) Confirma as inserções
     cursor.connection.commit()
     print("Pesos inseridos com sucesso em 'lote_salvo'!")
+
+
+
+'''def valida_receita(cursor, receita_id):
+    """
+    Verifica se a receita existe no banco de dados.
+    """
+    query = "SELECT COUNT(*) FROM receita WHERE id = ?;"
+    cursor.execute(query, (receita_id,))
+    if cursor.fetchone()[0] == 0:
+        print(f"Receita {receita_id} não encontrada.")
+        return False
+    return True'''

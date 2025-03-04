@@ -93,12 +93,7 @@ if __name__ == "__main__":
         receita_id_exemplo = 20020111
 
         # Exemplo de vetor de 8 pesos medidos pelo operador ou CLP (todos fictícios).
-        vetor_pesos_medidos = [
-                    100.5, 200.0, 150.75, 300.0,
-                    400.0, 0.0,   50.0,   25.25,
-                    250.0, 99.99, 10.5,   500.0,
-                    130.0, 68.45, 250.75, 400.3
-                ]
+        vetor_pesos_medidos = [3560.0, 0.0, 0.0, 0.0, 250.0, 101.0, 205.0, 0.0, 205.0, 302.0, 0.0, 0.0, 101.0, 55.0, 56.0, 55.0, 60.0, 105.0, 0.0, 0.0, 105.0, 0.0, 0.0, 0.0, 260.0, 280.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
 
 
         # Chama a função para inserir em 'lote_salvo'
