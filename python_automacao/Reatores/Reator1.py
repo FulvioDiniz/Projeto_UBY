@@ -159,7 +159,7 @@ def Reator1():
                                 print("Erro ao enviar lote para o CLP.")
                                 open_pop_up_loading_to_plc(PLC_IP,1)
                                 validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
-                                time.sleep(10)
+                                time.sleep(5)
                                 open_pop_up_loading_to_plc(PLC_IP,0)
                                 validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
                                 set_visble_send_lote_to_clp(PLC_IP,0)
@@ -172,7 +172,7 @@ def Reator1():
                                     print(receita_id)
                                     processar_receita_enviando_lote(receita_id)
                                     validador_set_bit_enviado_to_plc(PLC_IP,1)
-                                    time.sleep(10)
+                                    time.sleep(5)
                                     validador_set_bit_enviado_to_plc(PLC_IP,0)
                                     open_pop_up_loading_to_plc(PLC_IP,0)
                                     set_value_bar_loading_to_plc(PLC_IP, 0) 
@@ -184,34 +184,32 @@ def Reator1():
                                     except:
                                         print("Erro ao ler bit de receita em processo.")
                                         break
-                                try:
-                                    cnxn = pyodbc.connect(DB_CONFIG)
-                                    cursor = cnxn.cursor()
-                                    
-                                    receita_id_teste = receita_id
-                                    num_produtos_teste = quantidade_produtos_receita(cursor, receita_id_teste)
-                                    num_lotes_por_produto = 4
-                                    quantidade_de_lote = Qnt_total_lotes_receitas(cursor, receita_id)
-                                    vetor_peso_lote_teste = get_vetor_de_envio_ERP(PLC_IP, 1, num_produtos_teste)
+                                    try:
+                                        conn = pyodbc.connect(DB_CONFIG)
+                                        cursor = conn.cursor()
+                                        print("Conexão estabelecida com sucesso!")
 
-                                    envio_pesos_lote_erp(cursor, receita_id_teste, vetor_peso_lote_teste)
+                                        
+                                        receita_id = get_Receitaid_from_clp(PLC_IP)
 
-                                    cursor.execute("SELECT * FROM lote_enviado WHERE receita_id = ?", (receita_id_teste,))
-                                    rows = cursor.fetchall()
+                                        
+                                        vetor_pesos_medidos = get_vetor_de_envio_ERP(PLC_IP, 1, Qnt_total_lotes_receitas(cursor, receita_id))
 
-                                    print("Dados inseridos em lote_enviado:")
-                                    for row in rows:
-                                        print(row)
 
-                                except Exception as e:
-                                    print("Erro ao conectar ou inserir no SQL Server:", e)
+                                        # Chama a função para inserir em 'lote_salvo'
+                                        envio_pesos_lote_salvo(cursor, receita_id, vetor_pesos_medidos)
 
-                                finally:
-                                    if 'cursor' in locals():
-                                        cursor.close()
-                                    if 'cnxn' in locals():
-                                        cnxn.close()
-                                    print("Conexão fechada.")
+                                    except Exception as e:
+                                        print("Erro ao conectar ou inserir no SQL Server:", e)
+
+                                    finally:
+                                        try:
+                                            cursor.close()
+                                            conn.close()
+                                        except:
+                                            pass
+
+                                            
 
             else:
                 print("Erro ao enviar lote para o CLP 1.")

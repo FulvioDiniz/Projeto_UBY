@@ -1,103 +1,115 @@
 import pyodbc
 from datetime import datetime
 
-# Configuração do banco
-server = 'FULVIO\\FULVIO'
-database = 'TESTE'
-username = 'sa'
-password = '123456'
+import pyodbc
+from datetime import datetime
 
-DB_CONFIG = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    f'SERVER={server};'
-    f'DATABASE={database};'
-    f'UID={username};'
-    f'PWD={password}'
-)
-
-
-    
-def quantidade_produtos_receita(cursor, receita_id):
-    query = """
-    SELECT 
-        COUNT(p.id) AS total_produtos
-    FROM receita r
-    JOIN produto p ON r.id = p.receita_id
-    WHERE r.id = ?;
+def envio_pesos_lote_salvo(cursor, receita_id, vetor_peso_lote):
     """
-    cursor.execute(query, (receita_id,))
-    row = cursor.fetchone()
-    return row.total_produtos
+    Lê os lotes associados a uma receita (join de receita→produto→lote)
+    e insere registros em 'lote_salvo' com o peso real medido (peso_real).
 
-
-def envio_pesos_lote_erp(cursor, receita_id, vetor_peso_lote):
+    - 'receita_id': ID da receita na tabela 'receita'
+    - 'vetor_peso_lote': lista de pesos reais, correspondentes aos lotes em ordem
+    """
+    # 1) Busca informações de cada lote vinculado à receita (produto + lote)
     query = """
-        SELECT p.observacao AS produto_observacao
-        FROM produto p
-        JOIN receita r ON r.id = p.receita_id
+        SELECT
+            p.id            AS produto_id,
+            l.numero_lote,
+            l.identificacao_lote,
+            l.qtd_produto_cada_lote
+        FROM receita r
+        JOIN produto p ON r.id = p.receita_id
+        JOIN lote l ON p.id = l.produto_id
         WHERE r.id = ?
-        ORDER BY p.numero_produto;
+        ORDER BY p.numero_produto, l.numero_lote;
     """
-    
     cursor.execute(query, (receita_id,))
-    lista_produtos = cursor.fetchall()
-    
-    if not lista_produtos:
-        print(f"Nenhum produto encontrado para a receita: {receita_id}")
-        return
-
-    print("Produtos encontrados:", lista_produtos)
-
-    num_produtos = len(lista_produtos)
-    num_lotes_por_produto = 4
-    total_pesos_esperados = num_produtos * num_lotes_por_produto
-
-    if len(vetor_peso_lote) != total_pesos_esperados:
-        print(f"Erro: Esperados {total_pesos_esperados} pesos, mas foram fornecidos {len(vetor_peso_lote)}.")
-        return
-    
-    query_envia_peso = """
-        INSERT INTO lote_enviado (receita_id, produto, qtd_produto_cada_lote, data) 
-        VALUES (?, ?, ?, ?);
-    """
-
-    data = datetime.now()  # Enviar como objeto datetime, não string
-
-    index_peso = 0
-    for produto in lista_produtos:  
-        for lote in range(num_lotes_por_produto):  
-            cursor.execute(query_envia_peso, (receita_id, produto[0], vetor_peso_lote[index_peso], data))
-            index_peso += 1  
-
-    cnxn.commit()
-    print("Pesos enviados com sucesso!")
-
-try:
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
-    
-    receita_id_teste = 20020111
-    num_produtos_teste = quantidade_produtos_receita(cursor, receita_id_teste)
-    num_lotes_por_produto = 4
-
-    
-    vetor_peso_lote_teste = [3000.0, 2004.0, 1500.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    print(vetor_peso_lote_teste.__len__())
-    envio_pesos_lote_erp(cursor, receita_id_teste, vetor_peso_lote_teste)
-
-    cursor.execute("SELECT * FROM lote_enviado WHERE receita_id = ?", (receita_id_teste,))
     rows = cursor.fetchall()
 
-    print("Dados inseridos em lote_enviado:")
-    for row in rows:
-        print(row)
+    if not rows:
+        print(f"Nenhum lote encontrado para a receita {receita_id}.")
+        return
 
-except Exception as e:
-    print("Erro ao conectar ou inserir no SQL Server:", e)
+    # 2) Verifica se o 'vetor_peso_lote' combina com a quantidade de lotes
+    total_lotes = len(rows)
+    if len(vetor_peso_lote) != total_lotes:
+        print(f"Erro: Esperados {total_lotes} pesos, mas foram fornecidos {len(vetor_peso_lote)}.")
+        return
 
-finally:
-    if 'cursor' in locals():
-        cursor.close()
-    if 'cnxn' in locals():
-        cnxn.close()
-    print("Conexão fechada.")
+    # 3) Prepara o INSERT na nova tabela 'lote_salvo'
+    #    Agora incluindo 'data_insercao' na lista de colunas
+    insert_query = """
+        INSERT INTO lote_salvo (
+            produto_id,
+            numero_lote,
+            identificacao_lote,
+            qtd_produto_cada_lote,
+            peso_real,
+            data_insercao
+        ) VALUES (?, ?, ?, ?, ?, ?);
+    """
+
+    # 4) Insere cada lote na tabela 'lote_salvo', associando o peso real do vetor
+    #    e armazenando a data/hora de inserção
+    data_atual = datetime.now()
+    for i, row in enumerate(rows):
+        produto_id          = row.produto_id
+        numero_lote         = row.numero_lote
+        identificacao_lote  = row.identificacao_lote
+        qtd_cada_lote       = row.qtd_produto_cada_lote
+        peso_real           = vetor_peso_lote[i]  # valor real medido do lote
+
+        cursor.execute(insert_query, (
+            produto_id,
+            numero_lote,
+            identificacao_lote,
+            qtd_cada_lote,
+            peso_real,
+            data_atual  # data/hora de inserção
+        ))
+
+    # 5) Confirma as inserções
+    cursor.connection.commit()
+    print("Pesos inseridos com sucesso em 'lote_salvo'!")
+
+
+if __name__ == "__main__":
+    connection_string = (
+        'DRIVER={ODBC Driver 17 for SQL Server};'
+        'SERVER=FULVIO\\FULVIO;'
+        'DATABASE=TESTE;'
+        'UID=sa;'
+        'PWD=123456'
+    )
+
+    try:
+        conn = pyodbc.connect(connection_string)
+        cursor = conn.cursor()
+        print("Conexão estabelecida com sucesso!")
+
+        # Exemplo: suponha que a receita com ID=20020111 tem 8 lotes no total.
+        receita_id_exemplo = 20020111
+
+        # Exemplo de vetor de 8 pesos medidos pelo operador ou CLP (todos fictícios).
+        vetor_pesos_medidos = [
+                    100.5, 200.0, 150.75, 300.0,
+                    400.0, 0.0,   50.0,   25.25,
+                    250.0, 99.99, 10.5,   500.0,
+                    130.0, 68.45, 250.75, 400.3
+                ]
+
+
+        # Chama a função para inserir em 'lote_salvo'
+        envio_pesos_lote_salvo(cursor, receita_id_exemplo, vetor_pesos_medidos)
+
+    except Exception as e:
+        print("Erro ao conectar ou inserir no SQL Server:", e)
+
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass

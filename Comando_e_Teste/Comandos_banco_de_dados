@@ -232,3 +232,99 @@ DELETE FROM produto;
 
 -- 3) Deleta todos os registros de receita
 DELETE FROM receita;
+
+
+
+
+
+SELECT 
+    r.id AS receita_id,
+    r.observacao AS receita_observacao,
+	r.realizada AS receita_realizada,
+    p.id AS produto_id,
+    p.numero_produto,
+    p.qtd_produto,
+    p.observacao AS produto_observacao,
+    l.id AS lote_id,
+    l.numero_lote,
+    l.identificacao_lote,
+    l.qtd_produto_cada_lote
+FROM receita r
+JOIN produto p ON r.id = p.receita_id
+JOIN lote l ON p.id = l.produto_id
+WHERE r.id = 020020111
+ORDER BY p.numero_produto, l.numero_lote;
+
+
+
+
+SELECT * FROM lote_enviado
+
+DELETE from lote_enviado
+
+
+    SELECT 
+        l.qtd_produto_cada_lote
+    FROM receita r
+    JOIN produto p ON r.id = p.receita_id
+    JOIN lote l ON p.id = l.produto_id
+    WHERE r.id = 20020111
+    ORDER BY p.numero_produto, l.numero_lote;
+    
+
+
+
+SELECT * from lote_salvo
+
+DELETE from lote_salvo
+
+
+
+CREATE TABLE lote_salvo (
+    id INT IDENTITY(1,1) PRIMARY KEY,  -- Autoincremento
+    produto_id INT NOT NULL,
+    numero_lote INT NOT NULL,
+    identificacao_lote VARCHAR(255),
+    qtd_produto_cada_lote INT NOT NULL,
+    peso_real DECIMAL(10,2),
+    erro_percentual AS (
+        CASE 
+            WHEN qtd_produto_cada_lote = 0 THEN 0
+            ELSE CAST(
+                ((ABS(peso_real - qtd_produto_cada_lote) / qtd_produto_cada_lote) * 100.0)
+                AS DECIMAL(5,2)
+            )
+        END
+    ) PERSISTED,  -- Computado e armazenado fisicamente
+    FOREIGN KEY (produto_id) REFERENCES produto(id)
+);
+
+
+ALTER TABLE lote_salvo
+ALTER COLUMN peso_real DECIMAL(12,2) NULL; -- ou NOT NULL, conforme o caso
+
+
+
+
+-- 1) Remover a coluna computada (erro_percentual)
+ALTER TABLE lote_salvo
+DROP COLUMN erro_percentual;
+GO
+
+-- 2) Alterar o tipo de peso_real
+ALTER TABLE lote_salvo
+ALTER COLUMN peso_real DECIMAL(12,2) NULL;  -- Exemplo de NOVO tipo
+GO
+
+-- 3) Recriar a coluna computada erro_percentual
+ALTER TABLE lote_salvo
+ADD erro_percentual AS (
+    CASE 
+       WHEN qtd_produto_cada_lote = 0 THEN 0
+       ELSE CAST(
+          (ABS(peso_real - qtd_produto_cada_lote) / qtd_produto_cada_lote * 100.0)
+          AS DECIMAL(7,2)
+       )
+    END
+) PERSISTED;  -- Se quiser armazenar, senão omita PERSISTED
+GO

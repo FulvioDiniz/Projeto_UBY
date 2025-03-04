@@ -195,58 +195,75 @@ def quantidade_produtos_receita(cursor, receita_id):
     row = cursor.fetchone()
     return row.total_produtos
     
+import pyodbc
+from datetime import datetime
 
-def envio_pesos_lote_erp(cursor, receita_id, vetor_peso_lote):
+def envio_pesos_lote_salvo(cursor, receita_id, vetor_peso_lote):
+    """
+    Lê os lotes associados a uma receita (join de receita→produto→lote)
+    e insere registros em 'lote_salvo' com o peso real medido (peso_real).
+
+    - 'receita_id': ID da receita na tabela 'receita'
+    - 'vetor_peso_lote': lista de pesos reais, correspondentes aos lotes em ordem
+    """
+    # 1) Busca informações de cada lote vinculado à receita (produto + lote)
     query = """
-        SELECT p.observacao AS produto_observacao
-        FROM produto p
-        JOIN receita r ON r.id = p.receita_id
+        SELECT
+            p.id            AS produto_id,
+            l.numero_lote,
+            l.identificacao_lote,
+            l.qtd_produto_cada_lote
+        FROM receita r
+        JOIN produto p ON r.id = p.receita_id
+        JOIN lote l ON p.id = l.produto_id
         WHERE r.id = ?
-        ORDER BY p.numero_produto;
+        ORDER BY p.numero_produto, l.numero_lote;
     """
-    
     cursor.execute(query, (receita_id,))
-    lista_produtos = cursor.fetchall()
-    
-    if not lista_produtos:
-        print(f"Nenhum produto encontrado para a receita: {receita_id}")
+    rows = cursor.fetchall()
+
+    if not rows:
+        print(f"Nenhum lote encontrado para a receita {receita_id}.")
         return
 
-    print("Produtos encontrados:", lista_produtos)
-
-    num_produtos = len(lista_produtos)
-    num_lotes_por_produto = 4
-    total_pesos_esperados = num_produtos * num_lotes_por_produto
-
-    if len(vetor_peso_lote) != total_pesos_esperados:
-        print(f"Erro: Esperados {total_pesos_esperados} pesos, mas foram fornecidos {len(vetor_peso_lote)}.")
+    # 2) Verifica se o 'vetor_peso_lote' combina com a quantidade de lotes
+    total_lotes = len(rows)
+    if len(vetor_peso_lote) != total_lotes:
+        print(f"Erro: Esperados {total_lotes} pesos, mas foram fornecidos {len(vetor_peso_lote)}.")
         return
-    
-    query_envia_peso = """
-        INSERT INTO lote_enviado (receita_id, produto, qtd_produto_cada_lote, data) 
-        VALUES (?, ?, ?, ?);
+
+    # 3) Prepara o INSERT na nova tabela 'lote_salvo'
+    #    Agora incluindo 'data_insercao' na lista de colunas
+    insert_query = """
+        INSERT INTO lote_salvo (
+            produto_id,
+            numero_lote,
+            identificacao_lote,
+            qtd_produto_cada_lote,
+            peso_real,
+            data_insercao
+        ) VALUES (?, ?, ?, ?, ?, ?);
     """
 
-    data = datetime.now()  # Enviar como objeto datetime, não string
-    print("Enviando pesos...")
-    index_peso = 0
-    cont = 0
-    index_peso = 0
+    # 4) Insere cada lote na tabela 'lote_salvo', associando o peso real do vetor
+    #    e armazenando a data/hora de inserção
+    data_atual = datetime.now()
+    for i, row in enumerate(rows):
+        produto_id          = row.produto_id
+        numero_lote         = row.numero_lote
+        identificacao_lote  = row.identificacao_lote
+        qtd_cada_lote       = row.qtd_produto_cada_lote
+        peso_real           = vetor_peso_lote[i]  # valor real medido do lote
 
-    for produto in lista_produtos:  
-        for lote in range(num_lotes_por_produto):  
-            cursor.execute(
-                query_envia_peso, 
-                (receita_id, produto[cont], vetor_peso_lote[index_peso], data)
-            )
-            index_peso += 1
-        
-        cont += 1  # Só após processar os 4 lotes desse produto
+        cursor.execute(insert_query, (
+            produto_id,
+            numero_lote,
+            identificacao_lote,
+            qtd_cada_lote,
+            peso_real,
+            data_atual  # data/hora de inserção
+        ))
 
-            
-
-    cursor.commit()
-    cursor.close()
-    print("Pesos enviados com sucesso!")
-    
-
+    # 5) Confirma as inserções
+    cursor.connection.commit()
+    print("Pesos inseridos com sucesso em 'lote_salvo'!")
