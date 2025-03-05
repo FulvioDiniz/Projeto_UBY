@@ -1,9 +1,19 @@
 import pyodbc
-from Variaveis_Teste.Receita import Receita, Produto, Lote
+import sys
+import os
 import time
 from datetime import datetime
-server = 'FULVIO\\FULVIO'        # Ex: 'localhost\SQLEXPRESS'
-database = 'TESTE'           # Ex: 'meuBanco'
+
+# Adiciona o diretório "python_automacao" ao sys.path.
+project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_dir)
+print("sys.path:", sys.path)
+
+# Importa as classes atualizadas
+from Variaveis_Teste.Receita import Receita, Receita2, Produto, Lote
+
+server = 'FULVIO\\FULVIO'        # Ex: 'localhost\\SQLEXPRESS'
+database = 'UBY_ORIGIANAL'
 username = 'sa'
 password = '123456'
 
@@ -21,63 +31,71 @@ def Conexao_SQLSERVER(DB_CONFIG):
         cnxn = pyodbc.connect(DB_CONFIG)
         cursor = cnxn.cursor()
         print("Conexão estabelecida com sucesso!")
-        
-        # Exemplo de consulta
+        # Exibe versão do SQL Server
         cursor.execute("SELECT @@version;")
         row = cursor.fetchone()
         while row:
             print(row[0])
             row = cursor.fetchone()
-
+        return cursor
     except Exception as e:
         print("Erro ao conectar ao SQL Server:", e)
+        return None
 
-
-
-def consulta_produto_lote(cursor, numero_produto, numero_lote):
+def consulta_produto_lote(cursor, numero_produto):
+    """
+    Consulta um produto global e seu lote, juntando as tabelas [Receita], [ReceitaProduto], 
+    [ProdutoGlobal] e [Lote]. Retorna os dados que correspondem a um determinado número de produto
+    e número de lote.
+    """
     query = """
     SELECT 
-        r.id AS receita_id,
-        r.observacao AS receita_observacao,
-        p.id AS produto_id,
-        p.numero_produto,
-        p.qtd_produto,
-        p.observacao AS produto_observacao,
-        l.id AS lote_id,
-        l.numero_lote,
-        l.identificacao_lote,
-        l.qtd_produto_cada_lote
-    FROM receita r
-    JOIN produto p ON r.id = p.receita_id
-    JOIN lote l ON p.id = l.produto_id
-    WHERE p.numero_produto = ? AND l.numero_lote = ?;
+        r.receita_id,
+        r.nome_receita,
+        rp.receita_id AS rp_receita_id,
+        rp.produto_id,
+        pg.numero_produto,
+        rp.quantidade_total,
+        pg.nome AS produto_nome,
+        l.lote_id,
+        l.observacao_lote,
+        l.quantidade_lote,
+        l.peso_lote
+    FROM [Receita] r
+    JOIN [ReceitaProduto] rp ON r.receita_id = rp.receita_id
+    JOIN [ProdutoGlobal] pg ON rp.produto_id = pg.produto_id
+    JOIN [Lote] l ON pg.produto_id = l.produto_id
+    WHERE pg.numero_produto = ? 
     """
-    cursor.execute(query, (numero_produto, numero_lote))
+    cursor.execute(query, (numero_produto,))
     rows = cursor.fetchall()
     return rows
 
-
-
-def get_receita_from_db(cursor, receita_id):
+def get_receita_from_db_novo(cursor, receita_id):
     """
-    Consulta a receita com todos os produtos e lotes e instancia os objetos 
-    de acordo com as classes Receita, Produto e Lote.
+    Consulta a receita com todos os produtos e seus lotes a partir das tabelas:
+    [Receita], [ReceitaProduto], [ProdutoGlobal] e [Lote].
+    Instancia os objetos conforme as classes Receita2, Produto e Lote.
     """
     query = """
     SELECT 
-        r.id as receita_id,
-        r.observacao as receita_observacao,
-        p.numero_produto,
-        p.qtd_produto,
-        p.observacao as produto_observacao,
-        l.numero_lote,
-        l.identificacao_lote,
-        l.qtd_produto_cada_lote
-    FROM receita r
-    JOIN produto p ON r.id = p.receita_id
-    JOIN lote l ON p.id = l.produto_id
-    WHERE r.id = ?
-    ORDER BY p.numero_produto, l.numero_lote;
+        r.receita_id,
+        r.nome_receita,
+        r.produto_numero,
+        pg.produto_id,
+        pg.numero_produto,
+        rp.quantidade_total,
+        pg.nome AS produto_nome,
+        l.lote_id,
+        l.observacao_lote,
+        l.quantidade_lote,
+        l.peso_lote
+    FROM [Receita] r
+    JOIN [ReceitaProduto] rp ON r.receita_id = rp.receita_id
+    JOIN [ProdutoGlobal] pg ON rp.produto_id = pg.produto_id
+    JOIN [Lote] l ON pg.produto_id = l.produto_id
+    WHERE r.receita_id = ?
+    ORDER BY pg.numero_produto;
     """
     cursor.execute(query, (receita_id,))
     rows = cursor.fetchall()
@@ -86,201 +104,172 @@ def get_receita_from_db(cursor, receita_id):
         print("Nenhum dado encontrado para a receita.")
         return None
 
-    # Cria um dicionário para agrupar os dados por produto.
+    # Agrupa os produtos pela coluna 'numero_produto'
     produtos_dict = {}
     for row in rows:
         num_produto = row.numero_produto
         if num_produto not in produtos_dict:
             produtos_dict[num_produto] = {
-                "qtd_produto": row.qtd_produto,
-                "observacao": row.produto_observacao,
+                "produto_id": row.produto_id,
+                "quantidade_total": row.quantidade_total,
+                "produto_nome": row.produto_nome,
                 "lotes": []
             }
-        # Cria o objeto Lote para cada linha.
+        # Cria o objeto Lote com os campos da nova modelagem
         lote_obj = Lote(
-            numero_lote=row.numero_lote,
-            identificacao_lote=row.identificacao_lote,
-            qtd_produto_cada_lote=row.qtd_produto_cada_lote
+            lote_id=row.lote_id,
+            quantidade_lote = row.quantidade_lote,
+            peso_lote = row.peso_lote,
+            observacao_lote = row.observacao_lote
         )
         produtos_dict[num_produto]["lotes"].append(lote_obj)
     
-    # Cria a lista de objetos Produto
     produtos_list = []
     for num_produto, dados in produtos_dict.items():
         try:
             produto_obj = Produto(
-                numero_produto=num_produto,
-                qtd_produto=dados["qtd_produto"],
-                lotes=dados["lotes"],
-                observacao=dados["observacao"]
+                numero_produto = num_produto,
+                quantidade_total = dados["quantidade_total"],
+                nome = dados["produto_nome"],
+                lotes = dados["lotes"]
             )
             produtos_list.append(produto_obj)
         except ValueError as ve:
             print(f"Erro ao criar produto {num_produto}: {ve}")
-            # Caso a soma dos lotes não seja igual à qtd_produto, o ValueError é lançado.
-    nome_receita = rows[0].receita_observacao
-    # Cria a Receita com a lista de produtos
-    receita_obj = Receita(produtos=produtos_list,nome_receita=nome_receita)
+    
+    receita_obj = Receita2(
+        receita_id = receita_id,
+        produto_numero = rows[0].produto_numero,
+        nome_receita = rows[0].nome_receita,
+        produtos = produtos_list
+    )
     return receita_obj
 
-
-'''try:
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
-    receita_id = 1  # ou outro id desejado
-    resultado = consulta_produto_lote(cursor, receita_id,3)
-
-    
-    for row in resultado:
-        print(row)
-    
-except Exception as e:
-    print("Erro na conexão ou consulta:", e)'''
-
-
-def Qnt_total_lotes_receitas(cursor, receita_id):
+def Qnt_total_lotes_receitas_nova(cursor, receita_id):
     query = """
-    SELECT 
-        COUNT(l.id) AS total_lotes
-    FROM receita r
-    JOIN produto p ON r.id = p.receita_id
-    JOIN lote l ON p.id = l.produto_id
-    WHERE r.id = ?;
+    SELECT COUNT(l.lote_id) AS total_lotes
+    FROM [Receita] r
+    JOIN [ReceitaProduto] rp ON r.receita_id = rp.receita_id
+    JOIN [ProdutoGlobal] pg ON rp.produto_id = pg.produto_id
+    JOIN [Lote] l ON pg.produto_id = l.produto_id
+    WHERE r.receita_id = ?
     """
     cursor.execute(query, (receita_id,))
     row = cursor.fetchone()
     return row.total_lotes
 
-
-def verifica_receita_nova_no_db(cursor, receita_id):
-    query = "SELECT COUNT(*) FROM receita WHERE id = ?;"
-    cursor.execute(query, (receita_id,))
-    row = cursor.fetchone()
-    return row[0] > 0
-
-
-def envio_pesos_lote_erp(cursor, receita_id, vetor_peso_lote):
+def quantidade_produtos_receita_nova(cursor, receita_id):
     query = """
-            SELECT 
-                p.observacao AS produto_observacao
-                FROM produto p
-                JOIN receita r ON r.id = p.receita_id
-                WHERE r.id = ?
-                ORDER BY p.numero_produto;
-
-    """
-    cursor.execute(query, (receita_id))
-    cursor.commit()
-    lista_produtos = cursor.fetchall()
-    print(lista_produtos)
-    query_envia_peso = "INSERT INTO  lote_enviado(receita_id,produto,qtd_produto_cada_lote,data) VALUES (?,?,?,?);"
-    data = time.strftime('%D-%M-%Y %H:%M:%S')
-    for i in range(len(vetor_peso_lote)):
-        cursor.execute(query_envia_peso, (receita_id,lista_produtos[i], vetor_peso_lote[i],data))
-        cursor.commit()
-    cursor.close()
-    
-    
-    
-    
-def quantidade_produtos_receita(cursor, receita_id):
-    query = """
-    SELECT 
-        COUNT(p.id) AS total_produtos
-    FROM receita r
-    JOIN produto p ON r.id = p.receita_id
-    WHERE r.id = ?;
+    SELECT COUNT(rp.produto_id) AS total_produtos
+    FROM [Receita] r
+    JOIN [ReceitaProduto] rp ON r.receita_id = rp.receita_id
+    WHERE r.receita_id = ?
     """
     cursor.execute(query, (receita_id,))
     row = cursor.fetchone()
     return row.total_produtos
-    
-import pyodbc
-from datetime import datetime
 
-def envio_pesos_lote_salvo(cursor, receita_id, vetor_peso_lote):
+def envio_pesos_lote_salvo_novo(cursor, receita_id, vetor_peso_lote):
     """
-    Lê os lotes associados a uma receita (join de receita→produto→lote)
-    e insere registros em 'lote_salvo' com o peso real medido (peso_real).
-
-    - 'receita_id': ID da receita na tabela 'receita'
-    - 'vetor_peso_lote': lista de pesos reais, correspondentes aos lotes em ordem
+    Lê os lotes associados à receita (via [Receita], [ReceitaProduto], [ProdutoGlobal] e [Lote])
+    e insere registros na tabela 'lote_salvo' com o peso real medido.
     """
-    # 1) Busca informações de cada lote vinculado à receita (produto + lote)
     query = """
-        SELECT
-            p.id            AS produto_id,
-            l.numero_lote,
-            l.identificacao_lote,
-            l.qtd_produto_cada_lote
-        FROM receita r
-        JOIN produto p ON r.id = p.receita_id
-        JOIN lote l ON p.id = l.produto_id
-        WHERE r.id = ?
-        ORDER BY p.numero_produto, l.numero_lote;
+    SELECT 
+        pg.produto_id,
+        l.observacao_lote,
+        l.quantidade_lote
+    FROM [Receita] r
+    JOIN [ReceitaProduto] rp ON r.receita_id = rp.receita_id
+    JOIN [ProdutoGlobal] pg ON rp.produto_id = pg.produto_id
+    JOIN [Lote] l ON pg.produto_id = l.produto_id
+    WHERE r.receita_id = ?
+    ORDER BY pg.numero_produto;
     """
     cursor.execute(query, (receita_id,))
     rows = cursor.fetchall()
-
     if not rows:
         print(f"Nenhum lote encontrado para a receita {receita_id}.")
         return
-
-    # 2) Verifica se o 'vetor_peso_lote' combina com a quantidade de lotes
     total_lotes = len(rows)
-    print("total lote",total_lotes)
-    vetor_p = len(vetor_peso_lote)
-    print("total vetor peso", vetor_p)
+    print("Total de lotes:", total_lotes)
     if len(vetor_peso_lote) != total_lotes:
         print(f"Erro: Esperados {total_lotes} pesos, mas foram fornecidos {len(vetor_peso_lote)}.")
         return
-
-    # 3) Prepara o INSERT na nova tabela 'lote_salvo'
-    #    Agora incluindo 'data_insercao' na lista de colunas
     insert_query = """
-        INSERT INTO lote_salvo (
-            produto_id,
-            numero_lote,
-            identificacao_lote,
-            qtd_produto_cada_lote,
-            peso_real,
-            data_insercao
-        ) VALUES (?, ?, ?, ?, ?, ?);
+    INSERT INTO lote_salvo (
+        produto_id,
+        observacao_lote,
+        quantidade_lote,
+        peso_real,
+        data_insercao
+    ) VALUES (?, ?, ?, ?, ?);
     """
-
-    # 4) Insere cada lote na tabela 'lote_salvo', associando o peso real do vetor
-    #    e armazenando a data/hora de inserção
     data_atual = datetime.now()
     for i, row in enumerate(rows):
-        produto_id          = row.produto_id
-        numero_lote         = row.numero_lote
-        identificacao_lote  = row.identificacao_lote
-        qtd_cada_lote       = row.qtd_produto_cada_lote
-        peso_real           = vetor_peso_lote[i]  # valor real medido do lote
-        print(produto_id,numero_lote,identificacao_lote,qtd_cada_lote,peso_real,data_atual)
-
+        produto_id = row.produto_id
+        observacao_lote = row.observacao_lote
+        quantidade_lote = row.quantidade_lote
+        peso_real = vetor_peso_lote[i]
+        print(produto_id,  observacao_lote, quantidade_lote, peso_real, data_atual)
         cursor.execute(insert_query, (
             produto_id,
-            numero_lote,
-            identificacao_lote,
-            qtd_cada_lote,
+            observacao_lote,
+            quantidade_lote,
             peso_real,
-            data_atual  # data/hora de inserção
+            data_atual
         ))
-
-    # 5) Confirma as inserções
     cursor.connection.commit()
     print("Pesos inseridos com sucesso em 'lote_salvo'!")
 
+# MAIN - Teste de todas as funções do sistema
+if __name__ == "__main__":
+    cursor = Conexao_SQLSERVER(DB_CONFIG)
+    if cursor:
+        # Define o ID da receita de teste conforme inserido no banco
+        receita_id_teste = 200000060359
+        
+        print("\n=== Consulta Produto Lote ===")
+        # Exemplo: consulta um produto com número 1 e lote 1
+        #resultado_pl = consulta_produto_lote(cursor, 1)
+        #for row in resultado_pl:
+            #print(row)
+        
+        print("\n=== Consulta Receita ===")
+        receita_obj = get_receita_from_db_novo(cursor, receita_id_teste)
+        #print(receita_obj)
+        
+        
+        
+        
+        print("receita",receita_obj.nome_receita)
+        print("produtos",receita_obj.produtos)
+        #print("produtos[0]",receita_obj.produtos[0])
+        print("produtos[0].lotes[0]",receita_obj.produtos[0].lotes[0])
+        print("Quantidade produto 1", receita_obj.produtos[0].quantidade_total)
+        print("Quantidade produto 2", receita_obj.produtos[1].quantidade_total)
+        print("QUantidade do lote 1 do produto 1",receita_obj.produtos[0].lotes[0].quantidade_lote)
+        print("QUantidade do lote 2 do produto 1",receita_obj.produtos[1].lotes[0].quantidade_lote)
+        
+        print("Quantidade total de lote",len(receita_obj.produtos[0].lotes))
+        print("Observacao lote 1",receita_obj.produtos[0].lotes[0].observacao_lote)
+        #print("produtos[1]",receita_obj.produtos[1])
+        #print("produtos[1].lotes[0]",receita_obj.produtos[1].lotes[0])
+        print("Quantidade de lote no produto",len(receita_obj.produtos[0].lotes))
+        
+        
+        
+        
+        total_lotes = Qnt_total_lotes_receitas_nova(cursor, receita_id_teste)
+        #print(f"\nReceita {receita_id_teste}: Total de lotes = {total_lotes}")
+        
+        #total_produtos = quantidade_produtos_receita_nova(cursor, receita_id_teste)
+        #print(f"Receita {receita_id_teste}: Total de produtos = {total_produtos}")
+        
+        #print("\n=== Envio de Pesos para 'lote_salvo' ===")
+        # Exemplo: vetor de pesos para cada lote (todos com 1.2 para teste)
+        #vetor_pesos = [1.2] * total_lotes
+        #envio_pesos_lote_salvo_novo(cursor, receita_id_teste, vetor_pesos)
+        
+        cursor.close()
 
-
-'''def valida_receita(cursor, receita_id):
-    """
-    Verifica se a receita existe no banco de dados.
-    """
-    query = "SELECT COUNT(*) FROM receita WHERE id = ?;"
-    cursor.execute(query, (receita_id,))
-    if cursor.fetchone()[0] == 0:
-        print(f"Receita {receita_id} não encontrada.")
-        return False
-    return True'''

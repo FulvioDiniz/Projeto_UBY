@@ -125,19 +125,13 @@ def set_quantidade_produto_to_clp(plc_ip,pos, quantidade,reator):
 
 def get_Receitaid_from_clp(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
-        if reator < 10:
-            reator = str('0' + str(reator))
-        tag_name = f'Param_Reator_{reator}.Product_batch'
+        tag_name = f'Batch_Number_R{reator}'
         result = plc.read(tag_name)
         if result:
             return result.value
         return None
     
-def set_Receitaid_to_clp(plc_ip, reator,value):
-    with LogixDriver(plc_ip) as plc:
-        tag_name = f'Param_Reator_{reator}.Product_batch'
-        plc.write(tag_name, value)
-        print("Receita enviada para o CLP.")
+
     
 def set_validador_coninuo_programa_concluida(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
@@ -150,9 +144,11 @@ def validador_send_lote(plc_ip,reator):
     with LogixDriver(plc_ip) as plc:
         tag_name = f'Cmd_Search_Batch_R{reator}'
         result = plc.read(tag_name)
+        print(f"Validador de envio de lote obtido do CLP: {result.value}")
         if result:
             return result.value
         return None
+    
     
 def set_validador_send_lote_concluido(plc_ip,reator,value):
     with LogixDriver(plc_ip) as plc:
@@ -252,3 +248,51 @@ def set_finaliza_receita(plc_ip, reator,value):
     with LogixDriver(plc_ip) as plc:
         plc.write(f'ERP_REATOR{reator}.Bit_Volta', value)
         print("Bit de finalização de receita ativado no CLP.")
+        
+        
+        
+def set_peso(plc_ip,peso):
+    with LogixDriver(plc_ip) as plc:
+        plc.write('PESO', peso)
+        print("Peso enviado para o CLP.")
+        
+        
+        
+        
+def get_receita_em_processo_to_clp(plc_ip,reator):
+    with LogixDriver(plc_ip) as plc:
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Sts_sent_OK'
+        result = plc.read(tag_name)
+        print(f"Validador de receita em processo obtido do CLP: {result.value}")
+        if result:
+            return result.value
+        return None
+    
+    
+def get_exclusao_receita_to_clp(plc_ip,reator):
+    with LogixDriver(plc_ip) as plc:
+        tag_name = f'Finalizar_ReceitaR{reator}'
+        result = plc.read(tag_name)
+        print(f"Validador de exclusão de receita obtido do CLP: {result.value}")
+        if result:
+            return result.value
+        return None
+    
+    
+def set_valor_receita_produto_id_to_clp(plc_ip, reator,produto_id):
+    with LogixDriver(plc_ip) as plc:
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_batch'
+        plc.write((tag_name, produto_id))
+        print("Receita enviada para o CLP.")
+        
+def set_produto_id_to_clp(plc_ip, reator,produto_id):
+    with LogixDriver(plc_ip) as plc:
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_batch'
+        plc.write((tag_name, produto_id))
+        print("Receita enviada para o CLP.")
