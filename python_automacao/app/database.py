@@ -255,7 +255,7 @@ if __name__ == "__main__":
         print("Observacao lote 1",receita_obj.produtos[0].lotes[0].observacao_lote)
         #print("produtos[1]",receita_obj.produtos[1])
         #print("produtos[1].lotes[0]",receita_obj.produtos[1].lotes[0])
-        print("Quantidade de lote no produto",len(receita_obj.produtos[0].lotes))
+        print("Quantidade de lote no produto",len(receita_obj.produtos[3].lotes))
         
         
         

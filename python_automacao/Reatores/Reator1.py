@@ -45,7 +45,7 @@ def processar_receita_enviando_lote(receita_id):
             print(f"\nProduto {produto.numero_produto} | Quantidade de lotes: {num_lotes}")
             # Usa o campo 'quantidade_total' (anteriormente 'qtd_produto') do produto
             set_quantidade_produto_to_clp(get_plc_ip(), j, quantidade_produtos_receita_nova(cursor, receita_id_teste), 1)
-            somador += receita_obj.produtos[0].quantidade_total
+            somador += receita_obj.produtos[j].quantidade_total
             load = num_lotes / divisor
             val_total_load += load
             val_total_load_100 = val_total_load * 100
