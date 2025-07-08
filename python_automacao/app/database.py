@@ -221,7 +221,48 @@ def envio_pesos_lote_salvo_novo(cursor, receita_id, vetor_peso_lote):
         ))
     cursor.connection.commit()
     print("Pesos inseridos com sucesso em 'lote_salvo'!")
+    
+    
+    
+# É recomendado importar a classe de erro específica do seu driver, 
+# por exemplo, pyodbc.Error, se estiver usando pyodbc.
 
+def get_numeros_de_produto_da_receita(cursor, receita_id: int) -> list | None:
+    """
+    Consulta e retorna uma lista com todos os números de produto associados 
+    a uma receita específica.
+
+    Args:
+        cursor: Um objeto cursor de banco de dados já conectado.
+        receita_id (int): O ID da receita a ser consultada.
+
+    Returns:
+        list: Uma lista contendo todos os números de produto encontrados.
+              Retorna uma lista vazia ([]) se nenhum produto for encontrado.
+        None: Retorna None se ocorrer um erro durante a execução da consulta.
+    """
+    # --- QUERY CORRIGIDA ---
+    # Apontando todas as referências de 'produto_numero' para a tabela 'Receita' (alias 'r')
+    # e usando DISTINCT para evitar duplicatas.
+    query = """
+    SELECT DISTINCT
+        r.produto_numero
+    FROM [Receita] r
+    JOIN [ReceitaProduto] rp ON r.receita_id = rp.receita_id
+    JOIN [ProdutoGlobal] pg ON rp.produto_id = pg.produto_id
+    WHERE r.receita_id = ?
+    ORDER BY r.produto_numero;
+    """
+    try:
+        cursor.execute(query, receita_id)
+        rows = cursor.fetchall()
+        produtos_encontrados = [row[0] for row in rows]
+        return produtos_encontrados
+
+    except Exception as e:
+        print(f"ERRO ao consultar o banco de dados para a receita {receita_id}: {e}")
+        return None
+    
 # MAIN - Teste de todas as funções do sistema
 if __name__ == "__main__":
     cursor = Conexao_SQLSERVER(DB_CONFIG)
@@ -234,9 +275,11 @@ if __name__ == "__main__":
         #resultado_pl = consulta_produto_lote(cursor, 1)
         #for row in resultado_pl:
             #print(row)
+        teste = get_numeros_de_produto_da_receita(cursor, receita_id_teste)
+        print(f"Número do produto para a receita {receita_id_teste}: {teste}")
         
         print("\n=== Consulta Receita ===")
-        receita_obj = get_receita_from_db_novo(cursor, receita_id_teste)
+        '''receita_obj = get_receita_from_db_novo(cursor, receita_id_teste)
         #print(receita_obj)
         
         
@@ -269,7 +312,7 @@ if __name__ == "__main__":
         #print("\n=== Envio de Pesos para 'lote_salvo' ===")
         # Exemplo: vetor de pesos para cada lote (todos com 1.2 para teste)
         #vetor_pesos = [1.2] * total_lotes
-        #envio_pesos_lote_salvo_novo(cursor, receita_id_teste, vetor_pesos)
+        #envio_pesos_lote_salvo_novo(cursor, receita_id_teste, vetor_pesos)'''
         
         cursor.close()
 

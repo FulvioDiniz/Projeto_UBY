@@ -1,6 +1,5 @@
-# Configurações da conexão
-server = 'FULVIO\\FULVIO'        # Ex: 'localhost\SQLEXPRESS'
-database = 'TESTE'           # Ex: 'meuBanco'
+server = 'FULVIO\\FULVIO'        # Ex: 'localhost\\SQLEXPRESS'
+database = 'UBY_ORIGIANAL'
 username = 'sa'
 password = '123456'
 

@@ -3,7 +3,7 @@ from app.recipes_feitas import save_recipe_step_to_db, confirm_recipe_step_in_db
 from app.clp import *
 #from config.settings import PLC_IP
 from config.settings import get_plc_ip
-from app.database import get_receita_from_db, DB_CONFIG,Qnt_total_lotes_receitas
+from app.database import get_receita_from_db_novo, DB_CONFIG,Qnt_total_lotes_receitas
 import time
 
 
@@ -13,7 +13,7 @@ PLC_IP = get_plc_ip()
 def Validador_Encontra_receita(receita_id):
     cnxn = pyodbc.connect(DB_CONFIG)
     cursor = cnxn.cursor()
-    receita = get_receita_from_db(cursor, receita_id)
+    receita = get_receita_from_db_novo(cursor, receita_id)
     if receita is not None:
         cursor.close()
         cnxn.close()
@@ -30,7 +30,7 @@ def processar_receita_enviando_lote(receita_id):
     cursor = cnxn.cursor()
     
     # Busca a receita no banco
-    receita_obj = get_receita_from_db(cursor, receita_id)
+    receita_obj = get_receita_from_db_novo(cursor, receita_id)
     somador = 0
     load = 0
     val_total_load = 0

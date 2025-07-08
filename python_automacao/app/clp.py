@@ -181,7 +181,7 @@ def set_value_bar_loading_to_plc(plc_ip, valor):
 
 def open_pop_up_loading_to_plc(plc_ip,value):
     with LogixDriver(plc_ip) as plc:
-        tag_name = 'BIT_LOADING'
+        tag_name = 'BIT_LOADING_R1'
         plc.write((tag_name, value))
         print(f"Pop-up de carregamento aberto no CLP.")
 
@@ -286,8 +286,9 @@ def set_valor_receita_produto_id_to_clp(plc_ip, reator,produto_id):
         if reator < 10:
             reator = str('0' + str(reator))
         tag_name = f'Param_Reator_{reator}.Product_batch'
+        produto_id = int(produto_id)
         plc.write((tag_name, produto_id))
-        print("Receita enviada para o CLP.")
+        print("Receita enviada para o CLP.", produto_id)
         
 def set_produto_id_to_clp(plc_ip, reator,produto_id):
     with LogixDriver(plc_ip) as plc:
