@@ -217,11 +217,17 @@ def Reator1():
         if validador_de_comunicacao_to_clp(PLC_IP):
             if validador_send_lote(PLC_IP,1):
                 if puxar_receita_do_clp(PLC_IP):
-                    while True:
+                    max_attempts = 300  # for example, 5 minutes if you sleep 1 second per loop
+                    attempts = 0
+                    while attempts < max_attempts:
                         if procuro_bit_finalizador_receita(PLC_IP) or get_exclusao_receita_to_clp(PLC_IP,1):
                             break
                         else:
                             print("Receita em processo...")
+                            time.sleep(1)
+                            attempts += 1
+                    else:
+                        print("Timeout: Processo da receita excedeu o tempo limite.")
             else:
                 print("Nenhuma receita encontrada.")
         else:

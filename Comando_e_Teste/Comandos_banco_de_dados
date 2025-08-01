@@ -802,3 +802,7 @@ ORDER BY pg.numero_produto, l.lote_id;
     JOIN [ProdutoGlobal] pg ON rp.produto_id = pg.produto_id
     JOIN [Lote] l ON pg.produto_id = l.produto_id
     WHERE pg.numero_produto = 1
+
+
+
+    

@@ -290,10 +290,3 @@ def set_valor_receita_produto_id_to_clp(plc_ip, reator,produto_id):
         plc.write((tag_name, produto_id))
         print("Receita enviada para o CLP.", produto_id)
         
-def set_produto_id_to_clp(plc_ip, reator,produto_id):
-    with LogixDriver(plc_ip) as plc:
-        if reator < 10:
-            reator = str('0' + str(reator))
-        tag_name = f'Param_Reator_{reator}.Product_batch'
-        plc.write((tag_name, produto_id))
-        print("Receita enviada para o CLP.")
