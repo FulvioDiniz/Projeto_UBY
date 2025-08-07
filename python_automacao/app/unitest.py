@@ -1,13 +1,13 @@
 import unittest
 import pyodbc
 from datetime import datetime
+import database as db
 
 # Importa as funções do seu script original.
 # Renomeie 'seu_script_original' para o nome do arquivo .py que você forneceu.
-import database as db
-
 # --- CONFIGURAÇÃO (copiada do seu script) ---
 # Nota: As credenciais são gerenciadas aqui para que os testes sejam autocontidos.
+
 server = 'FULVIO\\FULVIO'
 database = 'Banco reformulado'
 username = 'sa'
@@ -231,6 +231,9 @@ class TestDatabaseFunctions(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # Permite executar os testes diretamente do terminal com "python test_banco.py"
     unittest.main(verbosity=2)   
-    
+# --- FIM DO CÓDIGO ---
+# --- FIM DO CÓDIGO ---
+# --- FIM DO CÓDIGO ---
+# --- FIM DO CÓDIGO ---
+# --- FIM DO CÓDIGO ---

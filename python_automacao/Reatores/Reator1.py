@@ -1,527 +1,379 @@
 import pyodbc
-from app.clp import *
-#from config.settings import PLC_IP
-from config.settings import get_plc_ip
-from app.database import *
+import sys
+import os
 import time
+from datetime import datetime
+
+
+# --- INÍCIO DA CORREÇÃO PARA EXECUÇÃO DIRETA ---
+# Adiciona o diretório raiz do projeto ('python_automacao') ao path do Python.
+# Isso permite que o script encontre as pastas 'app' e 'config' ao ser executado diretamente.
+try:
+    # Pega o caminho do diretório onde este script está (Reatores)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Volta um nível no diretório para chegar na pasta raiz do projeto ('python_automacao')
+    project_root = os.path.dirname(current_dir)
+    # Adiciona a pasta raiz ao início do path do sistema, se ainda não estiver lá.
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+except NameError:
+    # Fallback para ambientes onde __file__ não está definido
+    sys.path.insert(0, '.')
+# --- FIM DA CORREÇÃO ---
+
+
+# Agora os imports vão funcionar corretamente
+from app.clp import *
+from config.settings import get_plc_ip
 
 
 
-PLC_IP = get_plc_ip()
+# --- CONFIGURAÇÃO E CONEXÃO COM BANCO DE DADOS ---
+# (As mesmas funções que você já criou)
+server = 'FULVIO\\FULVIO'
+database = 'Banco reformulado'
+username = 'sa'
+password = '123456'
 
-def Validador_Encontra_receita(receita_id):
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
-    receita = get_receita_from_db_novo(cursor, receita_id)
-    if receita is not None:
-        cursor.close()
-        cnxn.close()
-        return True
-    else:
-        cursor.close()
-        cnxn.close()
-        return False
+DB_CONFIG = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    f'SERVER={server};'
+    f'DATABASE={database};'
+    f'UID={username};'
+    f'PWD={password}'
+)
 
-def processar_receita_enviando_lote(receita_id):
-    # Conecta ao banco
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
-    
-    # Busca a receita no banco (usa a função get_receita_from_db_novo adaptada à nova modelagem)
-    receita_obj = get_receita_from_db_novo(cursor, receita_id)
-    somador = 0
-    load = 0
-    val_total_load = 0
-    divisor = Qnt_total_lotes_receitas_nova(cursor, receita_id)
-    if receita_obj is not None:
-        set_Recipe_Name_to_clp(get_plc_ip(), receita_obj.nome_receita, 1)
-        produto_id = get_numeros_de_produto_da_receita(cursor, receita_id)
-        set_valor_receita_produto_id_to_clp(get_plc_ip(), 1, produto_id[0])
-        
-        #set_valor_receita_produto_id_to_clp(get_plc_ip(), receita_obj.receita_id, 1)
-        
-        # --- CORREÇÃO PRINCIPAL ---
-        # 1. Buscamos a lista de produtos da receita UMA VEZ e guardamos em uma variável.
-        produtos_da_receita = receita_obj.produtos
-        
-        # 2. Obtemos a quantidade total de produtos usando len() na lista que já temos.
-        total_de_produtos = len(produtos_da_receita)
-        
-        set_quantidade_produto_to_clp(get_plc_ip(), 0, total_de_produtos, 1) # Ajuste o segundo parâmetro se necessário
-
-        # 4. Agora percorremos a lista que já está na memória.
-        for j, produto_atual in enumerate(produtos_da_receita):
-            num_lotes = len(produto_atual.lotes) # Contamos os lotes do produto atual
-            print(f"\nProduto {produto_atual.numero_produto} | Quantidade de lotes: {num_lotes}")
-            
-
-
-            somador += produto_atual.quantidade_total
-            
-            # O cálculo de 'load' parece usar a quantidade de lotes, não o número total de produtos.
-            # A variável 'divisor' deve ser definida antes deste loop.
-            load = num_lotes / divisor 
-            val_total_load += load
-            val_total_load_100 = val_total_load * 100
-            set_value_bar_loading_to_plc(get_plc_ip(), int(val_total_load_100))
-            print(f"Load: {int(val_total_load_100)}")
-            
-            # Configura os lotes de acordo com a quantidade
-            match num_lotes:
-                case 1:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].quantidade_lote,
-                        0, 0, 0, 1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].observacao_lote,
-                        "", "", "", 1
-                    )
-                case 2:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].quantidade_lote,
-                        produto_atual.lotes[1].quantidade_lote,
-                        0, 0, 1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].observacao_lote,
-                        produto_atual.lotes[1].observacao_lote,
-                        "", "", 1
-                    )
-                case 3:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].quantidade_lote,
-                        produto_atual.lotes[1].quantidade_lote,
-                        produto_atual.lotes[2].quantidade_lote,
-                        0, 1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].observacao_lote,
-                        produto_atual.lotes[1].observacao_lote,
-                        produto_atual.lotes[2].observacao_lote,
-                        "", 1
-                    )
-                case 4:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].quantidade_lote,
-                        produto_atual.lotes[1].quantidade_lote,
-                        produto_atual.lotes[2].quantidade_lote,
-                        produto_atual.lotes[3].quantidade_lote, 1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto_atual.lotes[0].observacao_lote,
-                        produto_atual.lotes[1].observacao_lote,
-                        produto_atual.lotes[2].observacao_lote,
-                        produto_atual.lotes[3].observacao_lote, 1
-                    )
-                case _:
-                    print("Nenhum lote encontrado para este produto.")
-                    
-        print(f"Somador: {somador}")
-        set_value_product_predicted_to_plc(get_plc_ip(), somador, 1)
-        cursor.close()
-        cnxn.close()
-        return True
-
-    else:
-        print(f"Não foi encontrada nenhuma receita com ID {receita_id}.")
-        cursor.close()
-        cnxn.close()
-        return False
-        
-def carregar_pop_up_failed_to_plc(PLC_IP):
-    print("Erro ao enviar lote para o CLP.")
-    open_pop_up_loading_to_plc(PLC_IP,1)
-    validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
-    time.sleep(5)
-    open_pop_up_loading_to_plc(PLC_IP,0)
-    validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
-    set_visble_send_lote_to_clp(PLC_IP,0,1)
-    return False
-    
-def carregar_pop_up_sucess_to_plc(PLC_IP, receita_id):
-    open_pop_up_loading_to_plc(PLC_IP,1)
-    set_visble_send_lote_to_clp(PLC_IP,1,1)
-    processar_receita_enviando_lote(receita_id)
-    validador_set_bit_enviado_to_plc(PLC_IP,1)
-    time.sleep(5)
-    validador_set_bit_enviado_to_plc(PLC_IP,0)
-    open_pop_up_loading_to_plc(PLC_IP,0)
-    set_value_bar_loading_to_plc(PLC_IP, 0) 
-    return True
-
-
-def puxar_receita_do_clp(PLC_IP):
-    receita_id = get_Receitaid_from_clp(PLC_IP,1)  
-    print(receita_id)  
-    if Validador_Encontra_receita(receita_id):
-        referencia = carregar_pop_up_sucess_to_plc(PLC_IP, receita_id)
-        set_validador_send_lote_concluido(PLC_IP,1,0)
-        return referencia
-        
-    else:            
-        return carregar_pop_up_failed_to_plc(PLC_IP)
-    
-def envia_receita_para_bd(PLC_IP):
+def Conexao_SQLSERVER(db_config):
+    """Estabelece a conexão com o banco de dados SQL Server."""
     try:
-        conn = pyodbc.connect(DB_CONFIG)
-        cursor = conn.cursor()
-        print("Conexão estabelecida com sucesso!")                                        
-        receita_id = get_Receitaid_from_clp(PLC_IP,1)
-        quantidade_lote = Qnt_total_lotes_receitas_nova(cursor, receita_id)                                                                            
-        vetor_pesos_medidos = get_vetor_de_envio_ERP(PLC_IP, 1, int(quantidade_lote/4.0))                                     
-        #envio_pesos_lote_salvo(cursor, receita_id, vetor_pesos_medidos)
+        cnxn = pyodbc.connect(db_config)
+        cursor = cnxn.cursor()
+        print("Conexão estabelecida com sucesso!")
+        return cursor
+    except pyodbc.Error as ex:
+        sqlstate = ex.args[0]
+        print(f"Erro ao conectar ao SQL Server. SQLSTATE: {sqlstate}")
+        print(ex)
+        return None
+
+# --- FUNÇÕES DE CONSULTA AO BANCO (Suas novas funções) ---
+
+def get_receita_com_lotes_disponiveis(cursor, receita_id: int) -> dict | None:
+    """
+    Busca os detalhes de uma receita, incluindo todos os LOTES DISPONÍVEIS para cada
+    produto da receita.
+    """
+    query = """
+    SELECT 
+        r.receita_id, r.nome_receita,
+        rp.receita_produto_id,
+        pg.produto_id, pg.numero_produto, pg.nome AS produto_nome,
+        rp.quantidade_total AS quantidade_necessaria,
+        l.lote_id, l.quantidade_lote, l.peso_lote, l.observacao_lote
+    FROM [Receita] r
+    JOIN [ReceitaProduto] rp ON r.receita_id = rp.receita_id
+    JOIN [ProdutoGlobal] pg ON rp.produto_id = pg.produto_id
+    LEFT JOIN [Lote] l ON pg.produto_id = l.produto_id
+    WHERE r.receita_id = ?
+    ORDER BY pg.numero_produto, l.lote_id;
+    """
+    try:
+        cursor.execute(query, receita_id)
+        rows = cursor.fetchall()
+        if not rows:
+            return None
+
+        receita_info = {
+            'receita_id': rows[0].receita_id,
+            'nome_receita': rows[0].nome_receita,
+            'produtos': {}
+        }
+        
+        for row in rows:
+            if row.numero_produto not in receita_info['produtos']:
+                receita_info['produtos'][row.numero_produto] = {
+                    'produto_id': row.produto_id,
+                    'receita_produto_id': row.receita_produto_id,
+                    'nome_produto': row.produto_nome,
+                    'quantidade_necessaria': row.quantidade_necessaria,
+                    'lotes_disponiveis': []
+                }
+            
+            if row.lote_id:
+                receita_info['produtos'][row.numero_produto]['lotes_disponiveis'].append({
+                    'lote_id': row.lote_id,
+                    'quantidade_lote': row.quantidade_lote,
+                    'peso_lote': row.peso_lote,
+                    'observacao': row.observacao_lote
+                })
+        
+        return receita_info
+
+    except pyodbc.Error as e:
+        print(f"Erro ao buscar detalhes da receita {receita_id}: {e}")
+        return None
+
+# --- FUNÇÕES DE GERENCIAMENTO DA PRODUÇÃO (Suas novas funções) ---
+
+def iniciar_producao(cursor, receita_id: int, observacao: str = None) -> int | None:
+    """
+    Cria um novo registro na tabela Producao para marcar o início de uma produção.
+    """
+    query = """
+    INSERT INTO Producao (receita_id, data_inicio, status_producao, observacao)
+    VALUES (?, ?, ?, ?);
+    SELECT SCOPE_IDENTITY();
+    """
+    try:
+        data_inicio = datetime.now()
+        status_inicial = 'Iniciada'
+        
+        cursor.execute(query, receita_id, data_inicio, status_inicial, observacao)
+        producao_id = cursor.fetchone()[0]
+        cursor.connection.commit()
+        
+        print(f"Produção iniciada com sucesso. ID da Produção: {producao_id}")
+        return producao_id
+    except pyodbc.Error as e:
+        cursor.connection.rollback()
+        print(f"Erro ao iniciar produção para a receita {receita_id}: {e}")
+        return None
+
+def registrar_pesagem(cursor, producao_id: int, etapa: str, peso: float, responsavel: str,
+                      receita_produto_id: int, lote_id: int):
+    """
+    Registra uma pesagem e o uso do lote associado.
+    """
+    query_uso_lote = "INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (?, ?, ?);"
+    query_pesagem = "INSERT INTO ProducaoPesagem (producao_id, etapa_processo, peso, data_pesagem, responsavel) VALUES (?, ?, ?, ?, ?);"
+    
+    try:
+        # 1. Registrar o uso do lote
+        cursor.execute(query_uso_lote, receita_produto_id, lote_id, peso)
+
+        # 2. Registrar a pesagem
+        data_pesagem = datetime.now()
+        cursor.execute(query_pesagem, producao_id, etapa, peso, data_pesagem, responsavel)
+        
+        # O commit será feito pela função que chama esta, após todas as pesagens.
+        print(f"Registro de pesagem para a etapa '{etapa}' preparado.")
+    
+    except pyodbc.Error as e:
+        # Levanta uma exceção para que a transação seja revertida pela função chamadora.
+        raise Exception(f"Erro ao registrar pesagem para receita_produto_id {receita_produto_id} e lote {lote_id}: {e}")
+
+# --- LÓGICA PRINCIPAL DE INTERAÇÃO COM CLP (Seu código antigo, agora refatorado) ---
+
+def processar_e_enviar_receita_para_clp(cursor, receita_id: int):
+    """
+    Busca os detalhes da receita no banco e envia para o CLP.
+    """
+    PLC_IP = get_plc_ip()
+    detalhes_receita = get_receita_com_lotes_disponiveis(cursor, receita_id)
+    
+    if not detalhes_receita:
+        print(f"Não foi encontrada nenhuma receita com ID {receita_id}.")
+        return False
+
+    try:
+        # Envia nome da receita e quantidade de produtos
+        set_Recipe_Name_to_clp(PLC_IP, detalhes_receita['nome_receita'], 1)
+        total_de_produtos = len(detalhes_receita['produtos'])
+        set_quantidade_produto_to_clp(PLC_IP, 0, total_de_produtos, 1)
+
+        # Calcula o total de lotes para a barra de progresso
+        total_lotes_na_receita = sum(len(p['lotes_disponiveis']) for p in detalhes_receita['produtos'].values())
+        if total_lotes_na_receita == 0: total_lotes_na_receita = 1 # Evitar divisão por zero
+
+        somador_peso_total = 0
+        load_acumulado = 0
+
+        # Itera sobre os produtos da receita
+        for i, (num_produto, produto) in enumerate(detalhes_receita['produtos'].items()):
+            print(f"\nProcessando Produto {num_produto} ({produto['nome_produto']})")
+            
+            # Envia o ID do produto para o CLP
+            set_valor_receita_produto_id_to_clp(PLC_IP, i, num_produto) # Envia o ID real do produto
+            
+            somador_peso_total += produto['quantidade_necessaria']
+            
+            # Atualiza a barra de progresso
+            load_acumulado += len(produto['lotes_disponiveis'])
+            percentual_carga = (load_acumulado / total_lotes_na_receita) * 100
+            set_value_bar_loading_to_plc(PLC_IP, int(percentual_carga))
+            print(f"Progresso: {int(percentual_carga)}%")
+
+            # Envia os lotes para o CLP
+            lotes = produto['lotes_disponiveis']
+            # Adapte esta parte se precisar enviar mais de 4 lotes
+            pesos = [l['quantidade_lote'] for l in lotes] + [0] * (4 - len(lotes))
+            textos = [l['observacao'] for l in lotes] + [""] * (4 - len(lotes))
+            
+            set_lotes_peso_from_clp(PLC_IP, i, *pesos, 1)
+            set_lotes_TEXTO_from_clp(PLC_IP, i, *textos, 1)
+
+        print(f"\nPeso total previsto: {somador_peso_total}")
+        set_value_product_predicted_to_plc(PLC_IP, somador_peso_total, 1)
+        return True
 
     except Exception as e:
-        print("Erro ao conectar ou inserir no SQL Server:", e)
+        print(f"Ocorreu um erro ao enviar dados para o CLP: {e}")
         return False
 
-    finally:
-        try:
-            cursor.close()
-            conn.close()
-            return True
-        except:
-            pass
+def registrar_dados_finais_da_producao(cursor, producao_id: int, receita_id: int):
+    """
+    Busca os pesos medidos do CLP e os registra no banco de dados.
+    """
+    PLC_IP = get_plc_ip()
+    print("Buscando dados finais de pesagem do CLP...")
     
-
-
-def procuro_bit_finalizador_receita(PLC_IP):
-    if get_finaliza_receita(PLC_IP,1):
-        envia_receita_para_bd(PLC_IP)
-        set_finaliza_receita(PLC_IP,1,0)
-        
-        return True
-    else:
+    detalhes_receita = get_receita_com_lotes_disponiveis(cursor, receita_id)
+    if not detalhes_receita:
+        print(f"Erro: Não foi possível encontrar a receita {receita_id} para salvar os dados.")
         return False
+
+    try:
+        # Estrutura para mapear os pesos do CLP de volta aos produtos/lotes
+        # ASSUMINDO que o CLP retorna um vetor plano de pesos na mesma ordem que foram enviados
+        mapa_pesagem = []
+        for num_produto, produto in detalhes_receita['produtos'].items():
+            for lote in produto['lotes_disponiveis']:
+                mapa_pesagem.append({
+                    "receita_produto_id": produto['receita_produto_id'],
+                    "lote_id": lote['lote_id'],
+                    "nome_produto": produto['nome_produto']
+                })
+
+        # Busca o vetor de pesos do CLP
+        # A lógica de `int(len(mapa_pesagem)/4.0)` precisa ser confirmada.
+        # Se for um vetor simples, o segundo argumento pode ser o tamanho total.
+        num_leituras = len(mapa_pesagem)
+        vetor_pesos_medidos = get_vetor_de_envio_ERP(PLC_IP, 1, num_leituras) # Ajuste se necessário
+
+        if len(vetor_pesos_medidos) != num_leituras:
+            print(f"AVISO: O número de pesos recebidos do CLP ({len(vetor_pesos_medidos)}) não corresponde ao esperado ({num_leituras}).")
+
+        # Inicia a transação
+        for i, peso in enumerate(vetor_pesos_medidos):
+            if i < len(mapa_pesagem):
+                info = mapa_pesagem[i]
+                registrar_pesagem(
+                    cursor=cursor,
+                    producao_id=producao_id,
+                    etapa=f"Pesagem de {info['nome_produto']}",
+                    peso=peso,
+                    responsavel="Sistema de Automação",
+                    receita_produto_id=info['receita_produto_id'],
+                    lote_id=info['lote_id']
+                )
+        
+        # Se tudo ocorreu bem, comita todas as alterações
+        cursor.connection.commit()
+        print("Todos os dados de pesagem foram salvos com sucesso no banco de dados.")
+        return True
+
+    except Exception as e:
+        # Se qualquer erro ocorrer, reverte a transação inteira
+        cursor.connection.rollback()
+        print(f"ERRO GERAL AO SALVAR DADOS DA PRODUÇÃO: {e}. A transação foi revertida.")
+        return False
+
 
 def Reator1():
+    """
+    Loop principal que monitora o CLP para iniciar e finalizar produções.
+    """
     while True:
         PLC_IP = get_plc_ip()
-        if validador_de_comunicacao_to_clp(PLC_IP):
-            if validador_send_lote(PLC_IP,1):
-                if puxar_receita_do_clp(PLC_IP):
-                    max_attempts = 300  # for example, 5 minutes if you sleep 1 second per loop
-                    attempts = 0
-                    while attempts < max_attempts:
-                        if procuro_bit_finalizador_receita(PLC_IP) or get_exclusao_receita_to_clp(PLC_IP,1):
-                            break
-                        else:
-                            print("Receita em processo...")
+        if not PLC_IP:
+            print("IP do CLP não configurado. Verifique as configurações.")
+            time.sleep(10)
+            continue
+
+        if not validador_de_comunicacao_to_clp(PLC_IP):
+            print("Erro de comunicação com o CLP. Tentando novamente...")
+            time.sleep(5)
+            continue
+
+        # Verifica se o CLP solicitou o início do envio de uma receita
+        if validador_send_lote(PLC_IP, 1):
+            cursor = Conexao_SQLSERVER(DB_CONFIG)
+            if not cursor:
+                print("Falha ao conectar ao banco de dados. O processo não pode continuar.")
+                time.sleep(10)
+                continue
+
+            try:
+                receita_id = get_Receitaid_from_clp(PLC_IP, 1)
+                print(f"CLP solicitou o processamento da receita ID: {receita_id}")
+
+                # 1. Inicia um novo registro de produção no banco
+                producao_id_atual = iniciar_producao(cursor, receita_id, "Produção iniciada pelo Reator 1")
+                
+                if producao_id_atual:
+                    # Mostra pop-up de carregamento no CLP
+                    open_pop_up_loading_to_plc(PLC_IP, 1)
+                    set_visble_send_lote_to_clp(PLC_IP, 1, 1)
+
+                    # 2. Processa e envia os dados da receita para o CLP
+                    sucesso_envio = processar_e_enviar_receita_para_clp(cursor, receita_id)
+
+                    if sucesso_envio:
+                        # Sinaliza sucesso no CLP e aguarda finalização
+                        validador_set_bit_enviado_to_plc(PLC_IP, 1)
+                        time.sleep(5)
+                        validador_set_bit_enviado_to_plc(PLC_IP, 0)
+                        open_pop_up_loading_to_plc(PLC_IP, 0)
+                        set_value_bar_loading_to_plc(PLC_IP, 0)
+                        set_validador_send_lote_concluido(PLC_IP, 1, 0) # Limpa o bit de solicitação
+
+                        print("Aguardando finalização da receita pelo CLP...")
+                        # 3. Loop de espera pelo sinal de finalização do CLP
+                        max_attempts = 300  # 5 minutos
+                        for _ in range(max_attempts):
+                            if get_finaliza_receita(PLC_IP, 1):
+                                print("Sinal de finalização recebido!")
+                                # 4. Registra os dados finais da produção
+                                registrar_dados_finais_da_producao(cursor, producao_id_atual, receita_id)
+                                set_finaliza_receita(PLC_IP, 1, 0) # Limpa o bit de finalização
+                                break
+                            
+                            if get_exclusao_receita_to_clp(PLC_IP, 1):
+                                print("Processo cancelado pelo operador no CLP.")
+                                # Aqui você pode adicionar lógica para atualizar o status da produção para "Cancelada"
+                                break
+                            
                             time.sleep(1)
-                            attempts += 1
-                    else:
-                        print("Timeout: Processo da receita excedeu o tempo limite.")
-            else:
-                print("Nenhuma receita encontrada.")
-        else:
-            print("Erro Conexão com clp na receita 1")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                        
-                                                        
-                                                        
-'''while True:        
-        if get_plc_ip() == None:
-            print("IP do CLP não configurado.")
-        else:
-            PLC_IP = get_plc_ip()            
-            if validador_de_comunicacao_to_clp(PLC_IP):
-                    print(validador_send_lote(PLC_IP,1))
-                    receita_id = get_Receitaid_from_clp(PLC_IP,1)  
-                    validador =  Validador_Encontra_receita(receita_id)     
-                    print(f"Validador =  {validador}")   
-                    print(get_plc_ip())  
-                    print("Rodando...")
-                    validador_coninuo_programa = validador_send_lote(PLC_IP,1)
-                    print(flag)
-                    if validador_coninuo_programa or flag == 1:                                
-                            if validador == False and flag == 0:
-                                carregar_pop_up_failed_to_plc(PLC_IP)
-                            if validador == True:
-                                print(f"Receita ID: {receita_id}")    
-                                if flag != 1:             
-                                    carregar_pop_up_sucess_to_plc(PLC_IP, receita_id)
-                                    flag = 1                                    
-                                while bit_receita_em_processo == 0:
-                                    try:
-                                        print("Receita em processo...")
-                                        bit_receita_em_processo = get_finaliza_receita(PLC_IP,1)
-                                    except:
-                                        print("Erro ao ler bit de receita em processo.")
-                                        break
-                                try:
-                                    conn = pyodbc.connect(DB_CONFIG)
-                                    cursor = conn.cursor()
-                                    print("Conexão estabelecida com sucesso!")
-                                        
-                                    receita_id = get_Receitaid_from_clp(PLC_IP,1)
-                                    quantidade_lote = Qnt_total_lotes_receitas(cursor, receita_id)
-                                    
-                                        
-                                    vetor_pesos_medidos = get_vetor_de_envio_ERP(PLC_IP, 1, int(quantidade_lote/4.0))
-                                    print(len(vetor_pesos_medidos))
-
-                                        # Chama a função para inserir em 'lote_salvo'
-                                    envio_pesos_lote_salvo(cursor, receita_id, vetor_pesos_medidos)
-                                    validador_coninuo_programa = set_validador_coninuo_programa_concluida(PLC_IP,1)
-                                    receita_id = 0
-                                    validador_coninuo_programa = set_validador_send_lote_concluido(PLC_IP,1,0)                                    
-                                    flag = 0
-
-                                except Exception as e:
-                                    print("Erro ao conectar ou inserir no SQL Server:", e)
-
-                                finally:
-                                    try:
-                                        cursor.close()
-                                        conn.close()
-                                    except:
-                                        pass
-
-                                            
-
-            else:
-                print("Erro ao enviar lote para o CLP 1.")
-                set_visble_send_lote_to_clp(PLC_IP,0,1)
-                print(get_plc_ip())'''
-
-                                                                                                               
-                                                        
-                                                        
-                                                        
-                      #RECEITA FUNCIONANDO V.1                                  
-                                                        
-                                    
-'''def Validador_Encontra_receita(receita_id):
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
-    receita = get_receita_from_db(cursor, receita_id)
-    if receita is not None:
-        cursor.close()
-        cnxn.close()
-        return True
-    else:
-        cursor.close()
-        cnxn.close()
-        return False
-
-def processar_receita_enviando_lote(receita_id):
-
-    # Conecta ao banco
-    cnxn = pyodbc.connect(DB_CONFIG)
-    cursor = cnxn.cursor()
-    
-    # Busca a receita no banco
-    receita_obj = get_receita_from_db(cursor, receita_id)
-    somador = 0
-    load = 0
-    val_total_load = 0
-    divisor = Qnt_total_lotes_receitas(cursor, receita_id)
-    
-    if receita_obj is not None:
-        set_Recipe_Name_to_clp(get_plc_ip(), receita_obj.nome_receita,1)
-        
-        # Percorre os produtos da receita
-        for j, produto in enumerate(receita_obj.produtos):
-            num_lotes = len(produto.lotes)
-            print(f"\nProduto: {produto.numero_produto} | Quantidade de lotes: {num_lotes}" )
-            set_quantidade_produto_to_clp(get_plc_ip(), j, produto.qtd_produto,1)
-            somador = produto.qtd_produto + somador
-            load = len(produto.lotes)/divisor
-            val_total_load = val_total_load + load
-            val_total_load_100 = val_total_load*100
-            set_value_bar_loading_to_plc(get_plc_ip(), int(val_total_load_100))
-            print(f"Load: { int(val_total_load_100)}")
-                        
-            
-            # Ajusta a configuração de lotes de acordo com a quantidade
-            match num_lotes:
-                case 1:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        0, 0, 0,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].identificacao_lote,"", "", "",1
-                    )
-                case 2:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        produto.lotes[1].qtd_produto_cada_lote,
-                        0, 0,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].identificacao_lote, produto.lotes[1].identificacao_lote, "", "",1
-                    )
-                case 3:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        produto.lotes[1].qtd_produto_cada_lote,
-                        produto.lotes[2].qtd_produto_cada_lote,
-                        0,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].identificacao_lote, produto.lotes[1].identificacao_lote, produto.lotes[2].identificacao_lote, "",1
-                    )
-                case 4:
-                    set_lotes_peso_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].qtd_produto_cada_lote,
-                        produto.lotes[1].qtd_produto_cada_lote,
-                        produto.lotes[2].qtd_produto_cada_lote,
-                        produto.lotes[3].qtd_produto_cada_lote,1
-                    )
-                    set_lotes_TEXTO_from_clp(
-                        get_plc_ip(),
-                        j,
-                        produto.lotes[0].identificacao_lote, produto.lotes[1].identificacao_lote, produto.lotes[2].identificacao_lote, produto.lotes[3].identificacao_lote,1
-                    )
-                    
-                case _:
-                    print("Nenhum lote encontrado para este produto.")
-        print(f"Somador: {somador}")
-        set_value_product_predicted_to_plc(get_plc_ip(), somador,1)
-        cursor.close()
-        cnxn.close()
-        return True
- 
-        # Salva o passo da receita no banco          
-    else:
-        print(f"Não foi encontrada nenhuma receita com ID {receita_id}.")
-        cursor.close()
-        cnxn.close()
-        return False
-        
-def carregar_pop_up_failed_to_plc(PLC_IP):
-    print("Erro ao enviar lote para o CLP.")
-    open_pop_up_loading_to_plc(PLC_IP,1)
-    validador_falha_set_bit_enviado_to_plc(PLC_IP,1)
-    time.sleep(5)
-    open_pop_up_loading_to_plc(PLC_IP,0)
-    validador_falha_set_bit_enviado_to_plc(PLC_IP,0)
-    set_visble_send_lote_to_clp(PLC_IP,0,1)
-    return False
-    
-def carregar_pop_up_sucess_to_plc(PLC_IP, receita_id):
-    open_pop_up_loading_to_plc(PLC_IP,1)
-    set_visble_send_lote_to_clp(PLC_IP,1,1)
-    processar_receita_enviando_lote(receita_id)
-    validador_set_bit_enviado_to_plc(PLC_IP,1)
-    time.sleep(5)
-    validador_set_bit_enviado_to_plc(PLC_IP,0)
-    open_pop_up_loading_to_plc(PLC_IP,0)
-    set_value_bar_loading_to_plc(PLC_IP, 0) 
-    return True
-
-
-def puxar_receita_do_clp(PLC_IP):
-    receita_id = get_Receitaid_from_clp(PLC_IP,1)    
-    if Validador_Encontra_receita(receita_id):
-        referencia = carregar_pop_up_sucess_to_plc(PLC_IP, receita_id)
-        set_validador_send_lote_concluido(PLC_IP,1,0)
-        return referencia
-        
-    else:            
-        return carregar_pop_up_failed_to_plc(PLC_IP)
-    
-def envia_receita_para_bd(PLC_IP):
-    try:
-        conn = pyodbc.connect(DB_CONFIG)
-        cursor = conn.cursor()
-        print("Conexão estabelecida com sucesso!")                                        
-        receita_id = get_Receitaid_from_clp(PLC_IP,1)
-        quantidade_lote = Qnt_total_lotes_receitas(cursor, receita_id)                                                                            
-        vetor_pesos_medidos = get_vetor_de_envio_ERP(PLC_IP, 1, int(quantidade_lote/4.0))                                     
-        envio_pesos_lote_salvo(cursor, receita_id, vetor_pesos_medidos)
-
-    except Exception as e:
-        print("Erro ao conectar ou inserir no SQL Server:", e)
-        return False
-
-    finally:
-        try:
-            cursor.close()
-            conn.close()
-            return True
-        except:
-            pass
-    
-
-
-def procuro_bit_finalizador_receita(PLC_IP):
-    if get_finaliza_receita(PLC_IP,1):
-        envia_receita_para_bd(PLC_IP)
-        set_finaliza_receita(PLC_IP,1,0)
-        
-        return True
-    else:
-        return False
-
-    
-    
-
-
-
-def Reator1():
-    while True:
-        PLC_IP = get_plc_ip()
-        if validador_de_comunicacao_to_clp(PLC_IP):
-            if validador_send_lote(PLC_IP,1):
-                if puxar_receita_do_clp(PLC_IP):
-                    while True:
-                        if procuro_bit_finalizador_receita(PLC_IP) or get_exclusao_receita_to_clp(PLC_IP,1):
-                            break
                         else:
-                            print("Receita em processo...")
-            else:
-                print("Nenhuma receita encontrada.")
-        else:
-            print("Erro Conexão com clp na receita 1")
+                            print("Timeout: Processo da receita excedeu o tempo limite.")
+
+                    else: # Falha no envio para o CLP
+                        open_pop_up_loading_to_plc(PLC_IP, 0)
+                        validador_falha_set_bit_enviado_to_plc(PLC_IP, 1)
+                        time.sleep(5)
+                        validador_falha_set_bit_enviado_to_plc(PLC_IP, 0)
+                
+                else: # Falha ao iniciar a produção no banco
+                    print(f"Falha ao iniciar a produção para a receita {receita_id} no banco de dados.")
+                    # Sinalizar erro no CLP
+                    validador_falha_set_bit_enviado_to_plc(PLC_IP, 1)
+                    time.sleep(5)
+                    validador_falha_set_bit_enviado_to_plc(PLC_IP, 0)
+
+            finally:
+                # Garante que a conexão com o banco seja sempre fechada
+                if cursor:
+                    cursor.close()
+                print("\nConexão com o banco fechada. Aguardando próxima solicitação...")
+        
+        time.sleep(1) # Pequena pausa para não sobrecarregar a CPU
 
 
-
-'''
+if __name__ == "__main__":
+    print("Iniciando monitoramento do Reator 1...")
+    #Reator1()
+    dados_receita = get_receita_com_lotes_disponiveis(Conexao_SQLSERVER(DB_CONFIG), 20250002)
+    print(dados_receita['nome_receita'])  # Exibe o nome da receita
+    #for i, (num_produto, produto) in enumerate(dados_receita['produtos'].items()):
+            #print(f"\nProcessando Produto {num_produto} ({produto['nome_produto']})")
+    

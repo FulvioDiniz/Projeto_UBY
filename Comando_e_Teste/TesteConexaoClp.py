@@ -1,7 +1,7 @@
 from pycomm3 import LogixDriver, PycommError
 
 # --- CONFIGURAÇÕES ---
-# ❗ Altere para o IP correto do seu CLP
+# Altere para o IP correto do seu CLP
 PLC_IP = '192.168.13.200' 
 
 # A tag exata que você quer escrever
@@ -21,7 +21,7 @@ def set_valor_receita_produto_id_to_clp(plc_ip, reator,produto_id):
 if __name__ == "__main__":
     # Defina aqui o valor do peso que você quer enviar
     valor_para_escrever = 20020111.00
-
+    
     # Chama a função para realizar a operação
     sucesso = set_valor_receita_produto_id_to_clp(PLC_IP, 1, valor_para_escrever)
 
