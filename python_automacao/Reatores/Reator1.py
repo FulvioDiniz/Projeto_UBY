@@ -590,8 +590,7 @@ def Reator1():
                             # Verifica o bit de cancelamento do operador
                             if get_exclusao_receita_to_clp(plc, 1):
                                 print(">>> SINAL DE CANCELAMENTO RECEBIDO! <<<")
-                                # Aqui vai sua lógica para atualizar o status no banco para "Cancelada"...
-                                # set_exclusao_receita_to_clp(plc, 1, False) # Limpa o bit de exclusão
+                                update_producao(cursor, receita_id, "Produção cancelada pelo operador")
                                 processo_concluido = True
                                 break # Sai do loop de espera
                             
