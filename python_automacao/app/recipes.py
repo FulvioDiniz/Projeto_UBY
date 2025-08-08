@@ -1,20 +1,14 @@
-import psycopg2
-from config.settings import DB_CONFIG
+from pycomm3 import LogixDriver
 
-def get_recipe_from_db(recipe_name):
-    """Recupera a sequência de produtos da receita do banco de dados."""
-    conn = None
-    try:
-        conn = psycopg2.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        # Pega os produtos da receita ordenados pelos passos
-        cursor.execute("SELECT step, produto_nome FROM receita_produtos WHERE receita_nome = %s ORDER BY step;", (recipe_name,))
-        result = cursor.fetchall()
-        cursor.close()
-        return result
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"Erro ao recuperar a receita do banco de dados: {error}")
-        return None
-    finally:
-        if conn is not None:
-            conn.close()
+def set_value_product_predicted_to_plc(plc_ip, valor,reator):
+    with LogixDriver(plc_ip) as plc:
+        if reator < 10:
+            reator = str('0' + str(reator))
+        tag_name = f'Param_Reator_{reator}.Product_predicted'
+        plc.write((tag_name, valor))
+        print(f"Valor de produto previsto enviado para o CLP TOTAL: {valor}")
+
+# Seu código de teste permanece o mesmo
+if __name__ == "__main__":
+    print("Iniciando monitoramento do Reator 1...")
+    set_value_product_predicted_to_plc("192.168.1.120", int(300.0), 1)

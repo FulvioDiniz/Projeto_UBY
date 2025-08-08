@@ -1,5 +1,5 @@
 server = 'FULVIO\\FULVIO'        # Ex: 'localhost\\SQLEXPRESS'
-database = 'UBY_ORIGIANAL'
+database = 'Banco reformulado'
 username = 'sa'
 password = '123456'
 
