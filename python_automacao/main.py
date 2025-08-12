@@ -5,7 +5,7 @@ import os
 import time
 
 from Reatores.Reator1 import Reator1
-#from Reatores.Reator2 import Reator2
+from Reatores.Reator2 import Reator2
 
 processo_atual = psutil.Process(os.getpid())
 
@@ -14,7 +14,7 @@ def main():
 
     
     # Lista com as funções dos reatores que serão executadas
-    reatores = [Reator1]
+    reatores = [Reator1,Reator2]
     
     threads = []
     
@@ -28,4 +28,6 @@ def main():
         t.join()
 
 if __name__ == "__main__":
+    print("Iniciando o script principal...")
+    print(f"PID do processo atual: {processo_atual.pid}")
     main()

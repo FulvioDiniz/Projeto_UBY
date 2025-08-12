@@ -7,12 +7,12 @@ from pycomm3 import LogixDriver, PycommError
 
 def get_plc_ip():
     """Retorna um IP fixo para o teste."""
-    return '192.168.1.120'
+    return '192.168.21.25'
 
 def ler_tag_de_teste(plc: LogixDriver):
     """Uma função limpa para ler apenas a nossa tag de teste."""
     print("   -> Dentro do loop, tentando ler a tag 'TestePython'...")
-    tag_lida = plc.read('TestePython')
+    tag_lida = plc.read('eu')
     
     if tag_lida and tag_lida.value is not None:
         print(f"\n>>> SUCESSO DENTRO DO LOOP! A leitura da tag funcionou.")
