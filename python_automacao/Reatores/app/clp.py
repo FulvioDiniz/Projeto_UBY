@@ -133,7 +133,7 @@ def get_Receitaid_from_clp(plc: LogixDriver, reator: int):
 def validador_send_lote(plc: LogixDriver, reator: int):
     tag_name = f'Cmd_Search_Batch_R{reator}'
     result = plc.read(tag_name)
-    print(f"Validador de envio de lote obtido do CLP: {result.value if result else 'Falha'}")
+    print(f"Validador de envio de lote obtido do CLP{reator}: {result.value if result else 'Falha'}")
     return result.value if result else None
 
 def set_validador_send_lote_concluido(plc: LogixDriver, reator: int, value):
@@ -227,10 +227,6 @@ def set_finaliza_receita(plc: LogixDriver, reator: int, value):
     plc.write(f'ERP_REATOR{reator}.Bit_Volta', value)
     print(f"Bit de finalização de receita ({f'ERP_REATOR{reator}.Bit_Volta'}) setado para: {value}")
     
-def set_peso(plc: LogixDriver, peso):
-    plc.write('PESO', peso)
-    print(f"Peso {peso} enviado para o CLP.")
-
 def get_receita_em_processo_to_clp(plc: LogixDriver, reator: int):
     if reator < 10:
         reator = f'0{reator}'

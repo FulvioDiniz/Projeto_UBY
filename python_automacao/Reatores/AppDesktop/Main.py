@@ -1,5 +1,3 @@
-# seu_arquivo_principal.py
-
 import os
 import sys
 import tkinter as tk
@@ -7,22 +5,43 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import threading
 
-# Garante que o Python encontre a pasta 'config'
+# --- CONFIGURAÇÃO DE PATH E IMPORTS (CORRIGIDO PARA A NOVA ESTRUTURA) ---
+
+# Pega o caminho absoluto da pasta onde este script (seu frontend) está.
+# Ex: C:\...\python_automacao\AppDesktop
 current_dir = os.path.abspath(os.path.dirname(__file__))
+
+# Sobe um nível no diretório para chegar na pasta raiz do projeto.
+# Ex: C:\...\python_automacao
 project_root = os.path.abspath(os.path.join(current_dir, '..'))
+
+# Adiciona a pasta raiz ao path do sistema, se ainda não estiver lá.
+# Isso permite que o Python encontre as pastas 'Reatores', 'app', 'config', etc.
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# Agora, estas importações usarão o código robusto do Passo 1
-from config.settings import set_plc_ip, get_plc_ip
-from app.clp import validador_de_comunicacao_to_clp
-from main import main as reatores_main
+# Importa as funções necessárias dos seus outros arquivos
+try:
+    from config.settings import set_plc_ip, get_plc_ip
+    from app.clp import validador_de_comunicacao_to_clp
+    # A importação agora busca o arquivo dentro do pacote 'Reatores'
+    from inciar_processo import iniciar_todos_os_reatores
+except ImportError as e:
+    print("ERRO DE IMPORTAÇÃO: Verifique a estrutura das suas pastas e se o arquivo '__init__.py' existe na pasta 'Reatores'.")
+    print(f"Detalhe do erro: {e}")
+    exit()
 
 ADMIN_PASSWORD = "admin123"
 
 def resource_path(relative_path):
     """Retorna o caminho absoluto do recurso relativo a este script."""
-    base_path = os.path.dirname(os.path.abspath(__file__))
+    try:
+        # PyInstaller cria uma pasta temporária e armazena o caminho em _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        # --- CORREÇÃO AQUI ---
+        # Usa o diretório do script como base, que é mais confiável do que o diretório de trabalho atual.
+        base_path = os.path.abspath(os.path.dirname(__file__))
     return os.path.join(base_path, relative_path)
 
 class CLPApp(tk.Tk):
@@ -36,19 +55,19 @@ class CLPApp(tk.Tk):
             icon_path = resource_path(os.path.join("img", "logo.ico"))
             self.iconbitmap(icon_path)
         except Exception as e:
-            print("Erro ao carregar ícone:", e)
+            print(f"Erro ao carregar ícone: {e}")
         
         self.conectado = False
         self.esta_rodando = False
-        # Carrega o último IP salvo do arquivo settings.json
         self.clp_ip = get_plc_ip() or ''
         self.admin_password = ADMIN_PASSWORD
 
-        self._configurar_estilos()
+        # Garante que o evento de parada para as threads seja criado
+        self.stop_event = threading.Event()
 
+        self._configurar_estilos()
         self.container = tk.Frame(self, bg="white")
         self.container.pack(expand=True, fill="both", padx=20, pady=20)
-
         self._criar_layout_base()
         self._criar_widgets_conteudo()
 
@@ -63,18 +82,19 @@ class CLPApp(tk.Tk):
         self.geometry(f"+{x}+{y}")
 
         self._atualizar_tabela_status()
-
-        # Inicia a tentativa de conexão automática após a janela carregar
         self.after(500, self._tentar_conexao_inicial)
+        
+        # Adiciona um manipulador para o fechamento da janela
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-    # ... (O resto do código da classe CLPApp continua exatamente o mesmo da resposta anterior)
-    # Cole aqui todos os métodos: _configurar_estilos, _criar_layout_base, _criar_widgets_conteudo,
-    # _atualizar_tabela_status, _abrir_configuracoes, _tentar_conexao_inicial,
-    # _toggle_conexao, _conectar, e _desconectar.
-    # O código deles já está correto.
+
+    def on_closing(self):
+        """Função para lidar com o fechamento da janela."""
+        if self.esta_rodando:
+            self._desconectar()
+        self.destroy()
 
     def _configurar_estilos(self):
-        """Configura estilos de botões, rótulos e Treeview."""
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.style.configure("TButton",font=("Segoe UI", 12, "bold"),padding=(10, 4),background="#FFA500",foreground="white",anchor="center",justify="center")
@@ -88,7 +108,6 @@ class CLPApp(tk.Tk):
         self.style.map("Custom.Treeview.Heading",background=[("active", "#e69500")])
 
     def _criar_layout_base(self):
-        """Cria a estrutura base com pack."""
         self.error_label = tk.Label(self.container,text="",bg="white",fg="red",font=("Segoe UI", 12, "bold"))
         self.error_label.pack(side="top", fill="x", pady=(0, 10))
 
@@ -108,7 +127,7 @@ class CLPApp(tk.Tk):
             logo_label = tk.Label(pad_frame, image=self.logo_photo, bg="white")
             logo_label.pack(pady=(20, 10))
         except Exception as e:
-            print("Erro ao carregar logo:", e)
+            print(f"Erro ao carregar logo: {e}")
             logo_label = tk.Label(pad_frame, text="Logo da Empresa",font=("Segoe UI", 18, "bold"), bg="white")
             logo_label.pack(pady=(20, 10))
         self.title_label = ttk.Label(pad_frame, text="Conexão CLP", style="Title.TLabel")
@@ -143,7 +162,8 @@ class CLPApp(tk.Tk):
             gear_image = Image.open(gear_path)
             gear_image = gear_image.resize((32, 32), Image.Resampling.LANCZOS)
             self.gear_photo = ImageTk.PhotoImage(gear_image)
-        except:
+        except Exception as e:
+            print(f"Erro ao carregar imagem da engrenagem: {e}")
             self.gear_photo = None
         self.config_button = ttk.Button(self,image=self.gear_photo,command=self._abrir_configuracoes,style="Gear.TButton")
         if not self.gear_photo:
@@ -228,19 +248,34 @@ class CLPApp(tk.Tk):
             print(f"Não foi possível conectar ao IP: {self.clp_ip}")
             self.toggle_button.config(state="normal")
             return
+        
         set_plc_ip(self.clp_ip)
         print(f"Conexão com {self.clp_ip} bem-sucedida. IP salvo.")
         self.conectado = True
         self.esta_rodando = True
-        threading.Thread(target=reatores_main, daemon=True).start()
+        
+        self.stop_event.clear()
+        thread_orquestrador = threading.Thread(
+            target=iniciar_todos_os_reatores,
+            args=(self.stop_event,),
+            daemon=True
+        )
+        thread_orquestrador.start()
+        
         self.error_label.config(text="Conectado com sucesso!", fg="green")
         self._atualizar_tabela_status()
         self.toggle_button.config(state="normal")
         
     def _desconectar(self):
         self.toggle_button.config(state="disabled")
+        
+        if self.esta_rodando:
+            print("Enviando sinal de parada para todos os processos dos reatores...")
+            self.stop_event.set()
+
         self.conectado = False
         self.esta_rodando = False
+        
         print("Desconectado do CLP.")
         self.error_label.config(text="Desconectado.", fg="blue")
         self._atualizar_tabela_status()
