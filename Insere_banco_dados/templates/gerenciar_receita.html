@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-4">
+    <h3>Adicionar Novo Produto Global</h3>
+    <div class="card">
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('adicionar_produto_global') }}">
+          <div class="mb-3">
+            <label for="numero_produto" class="form-label">Número do Produto</label>
+            <input type="text" class="form-control" id="numero_produto" name="numero_produto" required>
+          </div>
+          <div class="mb-3">
+            <label for="nome" class="form-label">Nome do Produto</label>
+            <input type="text" class="form-control" id="nome" name="nome" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Adicionar Produto</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <h3>Produtos Existentes</h3>
+    <div class="list-group">
+      {% for produto in produtos %}
+        <div class="list-group-item">
+          {{ produto.nome }}
+          <span class="badge bg-secondary float-end">Nº: {{ produto.numero_produto }}</span>
+        </div>
+      {% else %}
+        <p class="text-muted">Nenhum produto global cadastrado.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

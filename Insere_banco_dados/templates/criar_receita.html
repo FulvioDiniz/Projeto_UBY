@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Criar Nova Receita</h1>
+  <div class="card mt-4">
+    <div class="card-body">
+      <form method="POST">
+        <div class="mb-3">
+          <label for="receita_id" class="form-label">ID da Receita</label>
+          <input type="number" class="form-control" id="receita_id" name="receita_id" required>
+        </div>
+        <div class="mb-3">
+          <label for="nome_receita" class="form-label">Nome da Receita</label>
+          <input type="text" class="form-control" id="nome_receita" name="nome_receita" required>
+        </div>
+        <div class="mb-3">
+          <label for="produto_numero" class="form-label">Número do Produto</label>
+          <input type="number" class="form-control" id="produto_numero" name="produto_numero" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar Receita</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+{% endblock %}

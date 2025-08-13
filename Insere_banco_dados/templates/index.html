@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Receitas Cadastradas</h1>
+    <a href="{{ url_for('criar_receita') }}" class="btn btn-primary">Nova Receita</a>
+  </div>
+  
+  <div class="list-group">
+    {% for receita in receitas %}
+      <a href="{{ url_for('detalhe_receita', receita_id=receita.receita_id) }}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">{{ receita.nome_receita }}</h5>
+          <small>ID: {{ receita.receita_id }}</small>
+        </div>
+        <p class="mb-1">Número de Produtos: {{ receita.produto_numero }}</p>
+      </a>
+    {% else %}
+      <div class="alert alert-info">Nenhuma receita cadastrada ainda.</div>
+    {% endfor %}
+  </div>
+{% endblock %}

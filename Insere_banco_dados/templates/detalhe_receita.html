@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Detalhes da Receita: {{ receita.nome_receita }}</h2>
+  <p><strong>ID:</strong> {{ receita.receita_id }}</p>
+  <hr>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      Produtos na Receita
+    </div>
+    <div class="card-body">
+      {% if produtos_na_receita %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Qtd. Total Necessária</th>
+              <th>Ações (Adicionar Lote)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for produto in produtos_na_receita %}
+            <tr>
+              <td>{{ produto.nome }} ({{ produto.numero_produto }})</td>
+              <td>{{ "%.2f"|format(produto.quantidade_total) }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('adicionar_lote') }}" class="row g-2 align-items-center">
+                  <input type="hidden" name="receita_id" value="{{ receita.receita_id }}">
+                  <input type="hidden" name="produto_id" value="{{ produto.produto_id }}">
+                  <input type="hidden" name="receita_produto_id" value="{{ produto.receita_produto_id }}">
+                  <div class="col-auto"><input type="text" name="observacao_lote" class="form-control form-control-sm" placeholder="Observação do Lote" required></div>
+                  <div class="col-auto"><input type="number" step="0.01" name="peso_lote" class="form-control form-control-sm" placeholder="Peso do Lote" required></div>
+                  <div class="col-auto"><button type="submit" class="btn btn-sm btn-success">Adicionar Lote</button></div>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>Nenhum produto associado a esta receita ainda.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      Adicionar Novo Produto à Receita
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('adicionar_produto_receita') }}">
+        <input type="hidden" name="receita_id" value="{{ receita.receita_id }}">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label for="produto_id" class="form-label">Produto</label>
+            <select name="produto_id" id="produto_id" class="form-select" required>
+              <option value="">Selecione um produto...</option>
+              {% for p_global in produtos_globais %}
+                <option value="{{ p_global.produto_id }}">{{ p_global.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="quantidade_total" class="form-label">Quantidade Total Necessária</label>
+            <input type="number" step="0.01" name="quantidade_total" id="quantidade_total" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Associar Produto</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <a href="{{ url_for('index') }}" class="btn btn-secondary mt-4">Voltar para a Lista</a>
+{% endblock %}
