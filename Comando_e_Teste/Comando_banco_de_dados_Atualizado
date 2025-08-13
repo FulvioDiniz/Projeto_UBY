@@ -329,3 +329,232 @@ ORDER BY
 
 
 
+
+
+
+
+
+
+BEGIN TRANSACTION;
+GO
+
+-- Declaração de variáveis globais para o script
+DECLARE @lote_id BIGINT;
+DECLARE @receita_id BIGINT = 2000000060359;
+DECLARE @produto_id INT;
+DECLARE @receita_produto_id BIGINT;
+
+-- PASSO 1: Criar a Receita (se não existir)
+INSERT INTO Receita (receita_id, produto_numero, nome_receita)
+SELECT @receita_id, 20020111, 'POTENTSMART'
+WHERE NOT EXISTS (SELECT 1 FROM Receita WHERE receita_id = @receita_id);
+
+-- PASSO 2: Criar os Produtos Globais (se não existirem)
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060006, 'AGUA' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060006);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060036, 'POLIGLICOL' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060036);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060035, 'SURFACTANTE NAO IONICO' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060035);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060037, 'DLIMONENO' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060037);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060018, 'GLICERINA' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060018);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060033, 'POLIMERO ACRILICO' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060033);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060017, 'ANTIESPUMANTE AFE-1430 OU SE4230 ADTIVO' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060017);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060021, 'CONSERVANTE' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060021);
+
+-- PASSO 3: Associar Produtos à Receita (se não existir a associação)
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060006), 2975.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060006));
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060036), 500.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060036));
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060035), 500.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060035));
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060037), 250.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060037));
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060018), 150.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060018));
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060033), 100.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060033));
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060017), 500.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060017));
+INSERT INTO ReceitaProduto (receita_id, produto_id, quantidade_total) SELECT @receita_id, (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060021), 25.00 WHERE NOT EXISTS (SELECT 1 FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = (SELECT produto_id FROM ProdutoGlobal WHERE numero_produto = 030060021));
+
+-- PASSO 4: Inserir Lotes e Associá-los IMEDIATAMENTE
+
+-- ----- Produto: AGUA (030060006) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060006;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 2000.00, 2000.00, 'Lote A1 de Água');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 2000.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 1500.00, 1500.00, 'Lote A2 de Água');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 975.00);
+
+-- ----- Produto: POLIGLICOL (030060036) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060036;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 300.00, 305.00, 'Lote P1 de Poliglicol');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 300.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 800.00, 815.00, 'Lote P2 de Poliglicol');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 200.00);
+
+-- ----- Produto: SURFACTANTE NAO IONICO (030060035) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060035;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 400.00, 410.00, 'Lote S1 de Surfactante');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 400.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 400.00, 410.00, 'Lote S2 de Surfactante');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 100.00);
+
+-- ----- Produto: DLIMONENO (030060037) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060037;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 150.00, 135.00, 'Lote D1 de D-Limoneno');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 150.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 200.00, 180.00, 'Lote D2 de D-Limoneno');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 100.00);
+
+-- ----- Produto: GLICERINA (030060018) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060018;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 100.00, 105.00, 'Lote G1 de Glicerina');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 100.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 100.00, 105.00, 'Lote G2 de Glicerina');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 50.00);
+
+-- ----- Produto: POLIMERO ACRILICO (030060033) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060033;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 50.00, 51.00, 'Lote PA1 de Polímero Acrílico');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 50.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 100.00, 102.00, 'Lote PA2 de Polímero Acrílico');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 50.00);
+
+-- ----- Produto: ANTIESPUMANTE (030060017) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060017;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 250.00, 252.00, 'Lote AN1 de Antiespumante');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 250.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 400.00, 404.00, 'Lote AN2 de Antiespumante');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 250.00);
+
+-- ----- Produto: CONSERVANTE (030060021) -----
+SELECT @produto_id = produto_id FROM ProdutoGlobal WHERE numero_produto = 030060021;
+SELECT @receita_produto_id = receita_produto_id FROM ReceitaProduto WHERE receita_id = @receita_id AND produto_id = @produto_id;
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 15.00, 15.00, 'Lote C1 de Conservante');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 15.00);
+INSERT INTO Lote (produto_id, quantidade_lote, peso_lote, observacao_lote) VALUES (@produto_id, 20.00, 20.00, 'Lote C2 de Conservante');
+SET @lote_id = SCOPE_IDENTITY();
+INSERT INTO ReceitaProdutoLote (receita_produto_id, lote_id, quantidade_utilizada) VALUES (@receita_produto_id, @lote_id, 10.00);
+
+
+COMMIT TRANSACTION;
+GO
+
+
+
+
+
+
+
+
+ SELECT
+        r.receita_id,
+        r.nome_receita,
+        rp.receita_produto_id,
+        pg.produto_id,
+        pg.numero_produto,
+        pg.nome AS produto_nome,
+        rp.quantidade_total AS quantidade_necessaria,
+        l.lote_id,
+        l.quantidade_lote,
+        l.peso_lote,
+        l.observacao_lote,
+        rpl.quantidade_utilizada
+    FROM
+        Receita r
+    JOIN
+        ReceitaProduto rp ON r.receita_id = rp.receita_id
+    JOIN
+        ReceitaProdutoLote rpl ON rp.receita_produto_id = rpl.receita_produto_id
+    JOIN
+        Lote l ON rpl.lote_id = l.lote_id
+    JOIN
+        ProdutoGlobal pg ON l.produto_id = pg.produto_id
+    WHERE
+        r.receita_id = 2000000060360
+    ORDER BY
+        pg.produto_id;
+
+
+
+
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060021, 'CONSERVANTE' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060021);
+INSERT INTO ProdutoGlobal (numero_produto, nome) SELECT 030060014, 'MELACO DE SEJOA' WHERE NOT EXISTS (SELECT 1 FROM ProdutoGlobal WHERE numero_produto = 030060014);
+
+UPDATE ProdutoGlobal SET nome = 'MELACO DE SOJA' WHERE numero_produto = 030060014
+
+
+SELECT * FROM ReceitaProdutoLote
+
+
+
+-- PASSO 1: Remover a tabela 'Lote' existente
+-- (Isso só funcionará se as tabelas que dependem dela, como ReceitaProdutoLote, estiverem vazias)
+DROP TABLE Lote;
+GO
+
+-- PASSO 2: Criar a tabela 'Lote' novamente com a ESTRUTURA CORRETA
+CREATE TABLE Lote (
+    lote_id BIGINT IDENTITY(1,1) PRIMARY KEY,  -- << AQUI ESTÁ A CORREÇÃO: IDENTITY(1,1)
+    produto_id INT,
+    quantidade_lote DECIMAL(18, 2),
+    peso_lote DECIMAL(18, 2),
+    observacao_lote VARCHAR(255),
+    
+    -- Recriando a chave estrangeira para garantir a integridade
+    CONSTRAINT FK_Lote_ProdutoGlobal FOREIGN KEY (produto_id) REFERENCES ProdutoGlobal(produto_id)
+);
+GO
+
+PRINT 'Tabela "Lote" corrigida com sucesso!';
+
+
+
+SELECT
+    r.nome_receita,
+    pg.nome AS nome_produto,
+    SUM(rpl.quantidade_utilizada) AS total_utilizado_na_receita
+FROM
+    Receita r
+JOIN
+    ReceitaProduto rp ON r.receita_id = rp.receita_id
+JOIN
+    ProdutoGlobal pg ON rp.produto_id = pg.produto_id
+JOIN
+    ReceitaProdutoLote rpl ON rp.receita_produto_id = rpl.receita_produto_id
+WHERE
+    r.nome_receita = 'L-6' AND pg.nome = 'AGUA'
+GROUP BY
+    r.nome_receita, pg.nome;
+
+
+
+
+SELECT
+    c.name AS NomeDaColuna,
+    t.name AS TipoDeDado,
+    c.is_identity AS E_AutoIncremento
+FROM
+    sys.columns c
+JOIN
+    sys.types t ON c.user_type_id = t.user_type_id
+WHERE
+    c.object_id = OBJECT_ID('dbo.Lote');
+
+
+
